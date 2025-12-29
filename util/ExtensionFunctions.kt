@@ -11,7 +11,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 
 // -----------------------------------------------------------------------------------------------------------------
-// ------- Extend ContentValues: add putters for additional data types:
+// ------- Extend ContentValues: add putters for additional data types (see https://tinyurl.com/CursorInterface):
 // -----------------------------------------------------------------------------------------------------------------
 
 fun ContentValues.put(key: String, value : LocalDate?) = this.put(key, Chronos.toString(value))
@@ -20,43 +20,43 @@ fun ContentValues.put(key: String, value : LocalDateTime?) = this.put(key, Chron
 
 // -----------------------------------------------------------------------------------------------------------------
 // ------- Extend Cursor: add getters for additional data types, and allow to get by column name
-// ------- rather than column index:
+// ------- rather than column index (see https://tinyurl.com/CursorInterface):
 // -----------------------------------------------------------------------------------------------------------------
 
-fun Cursor.getShort(columnName: String): Short? = this.getShort(this.getColumnIndex(columnName))
-fun Cursor.getInt(columnName: String): Int? = this.getInt(this.getColumnIndex(columnName))
-fun Cursor.getLong(columnName: String): Long? = this.getLong(this.getColumnIndex(columnName))
-fun Cursor.getFloat(columnName: String): Float? = this.getFloat(this.getColumnIndex(columnName))
-fun Cursor.getDouble(columnName: String): Double? = this.getDouble(this.getColumnIndex(columnName))
-fun Cursor.getString(columnName: String): String? = this.getString(this.getColumnIndex(columnName))
-fun Cursor.getBlob(columnName: String): ByteArray? = this.getBlob(this.getColumnIndex(columnName))
+fun Cursor.getShort(colName: String) = this.getShort(this.getColumnIndexOrThrow(colName))
+fun Cursor.getInt(colName: String) = this.getInt(this.getColumnIndexOrThrow(colName))
+fun Cursor.getLong(colName: String) = this.getLong(this.getColumnIndexOrThrow(colName))
+fun Cursor.getFloat(colName: String) = this.getFloat(this.getColumnIndexOrThrow(colName))
+fun Cursor.getDouble(colName: String) = this.getDouble(this.getColumnIndexOrThrow(colName))
+fun Cursor.getString(colName: String): String? = this.getString(this.getColumnIndexOrThrow(colName))
+fun Cursor.getBlob(colName: String): ByteArray? = this.getBlob(this.getColumnIndexOrThrow(colName))
 
-fun Cursor.getBoolean(columnName: String): Boolean {
-    val i = this.getInt(this.getColumnIndex(columnName))
+fun Cursor.getBoolean(colName: String): Boolean {
+    val i = this.getInt(this.getColumnIndexOrThrow(colName))
     when (i) {
         1 -> return true
         0 -> return false
     }
-    throw Exception("Value of field $columnName is $i. To be treated as Boolean, it must be 0 or 1.")
+    throw Exception("Value of field $colName is $i. To be treated as Boolean, it must be 0 or 1.")
 }
 
-fun Cursor.getLocalDate(columnName: String): LocalDate? {
-    val s = this.getString(this.getColumnIndex(columnName)) ?: return null
+fun Cursor.getLocalDate(colName: String): LocalDate? {
+    val s = this.getString(this.getColumnIndexOrThrow(colName)) ?: return null
     return Chronos.toLocalDate(s)
 }
 
-fun Cursor.getLocalTime(columnName: String): LocalTime? {
-    val s = this.getString(this.getColumnIndex(columnName)) ?: return null
+fun Cursor.getLocalTime(colName: String): LocalTime? {
+    val s = this.getString(this.getColumnIndexOrThrow(colName)) ?: return null
     return Chronos.toLocalTime(s)
 }
 
-fun Cursor.getLocalDateTime(columnName: String): LocalDateTime? {
-    val s = this.getString(this.getColumnIndex(columnName)) ?: return null
+fun Cursor.getLocalDateTime(colName: String): LocalDateTime? {
+    val s = this.getString(this.getColumnIndexOrThrow(colName)) ?: return null
     return Chronos.toLocalDateTime(s)
 }
 
 // -----------------------------------------------------------------------------------------------------------------
-// ------- Extend Chronometer functions to allow persistence:
+// ------- Extend Chronometer functions to allow persistence (https://tinyurl.com/PersistentChronometer):
 // -----------------------------------------------------------------------------------------------------------------
 
 // The key, by which the base time of the Chronometer (as a LocalDateTime) will be stored in SharedPreferences,

@@ -6,6 +6,10 @@ import android.database.sqlite.SQLiteDoneException
 import ca.intfast.iftimer.db.CustomSQLiteOpenHelper
 import kotlin.reflect.KFunction
 
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// Before you add this class to your app, create CustomSQLiteOpenHelper: https://tinyurl.com/SQLiteCRUD
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 open class CrudHelper(context: Context): CustomSQLiteOpenHelper(context) {
     // ----------------------------------------------------------------------------------------------------------------------
     // Encapsulates the typical CRUD functions applicable to DB entities.
@@ -50,7 +54,7 @@ open class CrudHelper(context: Context): CustomSQLiteOpenHelper(context) {
         // in extractContentValues() and populateFromCursor() of the class, passed as T.
 
         // If you need to retrieve a recordset, which doesn't correspond to a particular table (for example,
-        // to SELECT FROM a few joined tables, or grab statistics), then create (and pass to this function as <T>)
+        // to SELECT FROM a few joined tables, or grab statistics), then create (an pass to this function as <T>)
         // a custom class - just for that purpose. In this case, follow these rules:
         //      1. If the SQL SELECT has computed fields, give them aliases to be accessed by name in code.
         //      2. Override populateFromCursor() as usually (it's used on retrieval).
@@ -74,8 +78,9 @@ open class CrudHelper(context: Context): CustomSQLiteOpenHelper(context) {
         cursor.use {
             while (cursor.moveToNext()) {
                 // The following two code lines is a dirty trick to create an instance of a generic type.
-                // To enable that, the generic parameter is marked as reified. That is possible only
-                // in inline functions, so this function and all its callers are converted to inline.
+                // To enable that, the generic parameter is marked as reified.
+                // That is possible only in inline functions, so this function and all its callers are converted to inline.
+                // http://tinyurl.com/GenericTypeConstructor
                 val actualRuntimeClassConstructor: KFunction<T> = T::class.constructors.first()
                 val entity: T = actualRuntimeClassConstructor.call()
 
@@ -110,7 +115,8 @@ open class CrudHelper(context: Context): CustomSQLiteOpenHelper(context) {
                 if (required) throw Exception("CrudHelper.retrieveOne(): no data found by '$sqlSelect'.")
                 null
             }
-            else -> throw Exception("CrudHelper.retrieveOne(): ${entities.size} rows returned by '$sqlSelect' while one row expected.")
+            else -> throw
+            Exception("CrudHelper.retrieveOne(): ${entities.size} rows returned by '$sqlSelect' while one row expected.")
         }
     }
     /***********************************************************************************************************************/

@@ -3,11 +3,7 @@ package ca.intfast.iftimer.pref
 import android.os.Bundle
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
-import androidx.preference.DropDownPreference
-import androidx.preference.Preference
 import ca.intfast.iftimer.R
-import ca.intfast.iftimer.appwide.PrefKey
-import ca.intfast.iftimer.util.toast
 
 class PrefActivity: AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,10 +21,10 @@ class PrefActivity: AppCompatActivity() {
         supportActionBar?.setDisplayShowHomeEnabled(true)
     }
 
-    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-        when (item?.itemId) {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
             android.R.id.home -> finish() // user clicked "back" icon (left arrow) on the menu bar
         }
-        return super.onOptionsItemSelected(item!!)
+        return super.onOptionsItemSelected(item)
     }
 }

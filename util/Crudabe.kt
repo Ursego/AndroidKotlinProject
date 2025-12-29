@@ -6,9 +6,10 @@ import ca.intfast.iftimer.db.DbColumn
 
 // --------------------------------------------------------------------------------------------------------------------------
 // Must be implemented by all model classes, representing different entities of the application (like Emp, Dept etc.).
-// That will allow CrudHelper class manipulate those classes in its CRUD functions.
+// That will allow CrudHelper class to manipulate with those classes in its CRUD functions.
 // This interface forces you to write pure technical boilerplate code (population of ContentValues and reading from Cursor)
 // separately from the business logic, which makes that logic easier to write and, later, understand.
+// https://tinyurl.com/SQLiteCRUD
 // --------------------------------------------------------------------------------------------------------------------------
 
 interface Crudable {
@@ -41,7 +42,7 @@ interface Crudable {
 
     // Just copy-paste to the descendant and customize according to the fields in that descendant:
     //    override fun populateFromCursor(cursor: Cursor) {
-    //        this.id = cursor.getInt(DbColumn.ID) // http://code.intfast.ca/viewtopic.php?t=814
+    //        this.id = cursor.getInt(DbColumn.ID) // https://tinyurl.com/CursorInterface
     //        this.firstName = cursor.getString(DbColumn.FIRST_NAME)
     //        this.lastName = cursor.getString(DbColumn.LAST_NAME)
     //        this.dob = cursor.getLocalDate(DbColumn.DOB)

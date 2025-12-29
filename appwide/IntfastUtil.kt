@@ -6,6 +6,7 @@ import android.media.ToneGenerator
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.os.VibratorManager
 import ca.intfast.iftimer.util.AppPrefs
 
 fun beep(durationMs: Int) {
@@ -14,13 +15,15 @@ fun beep(durationMs: Int) {
 }
 
 fun vibrate(context: Context, durationMs: Int) {
-    val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-    if (Build.VERSION.SDK_INT >= 26) {
-        vibrator.vibrate(VibrationEffect.createOneShot(durationMs.toLong(), VibrationEffect.DEFAULT_AMPLITUDE))
+    val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+        vibratorManager.defaultVibrator
     } else {
         @Suppress("DEPRECATION")
-        vibrator.vibrate(durationMs.toLong())
+        context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
     }
+
+    vibrator.vibrate(VibrationEffect.createOneShot(durationMs.toLong(), VibrationEffect.DEFAULT_AMPLITUDE))
 }
 
 fun beepAndVibrate(context: Context) {

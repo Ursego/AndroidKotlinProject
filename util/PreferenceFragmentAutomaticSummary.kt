@@ -8,6 +8,7 @@ If you want the values of your Preferences be automatically reflected in the Sum
 the value is changed), then inherit yours preference fragment from this class (rather than from PreferenceFragmentCompat).
 PreferenceFragmentAutomaticSummary processes all the Preferences of types EditTextPreference, ListPreference and
 MultiSelectListPreference (and their descendants) on your settings screen - no additional coding required.
+See https://tinyurl.com/CreateAppSettings
 ****************************************************************************************************************************/
 
 abstract class PreferenceFragmentAutomaticSummary:
@@ -18,7 +19,7 @@ abstract class PreferenceFragmentAutomaticSummary:
         // IF YOU OVERRIDE IT, DON'T FORGET TO CALL IN THE FIRST LINE: super.onResume()
         super.onResume()
 
-        sharedPreferences = preferenceManager.sharedPreferences
+        sharedPreferences = preferenceManager.sharedPreferences!!
         sharedPreferences.registerOnSharedPreferenceChangeListener(this)
 
         val preferenceScreen = preferenceScreen
@@ -33,8 +34,9 @@ abstract class PreferenceFragmentAutomaticSummary:
         super.onPause()
     }
 
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
         // IF YOU OVERRIDE IT, DON'T FORGET TO CALL IN THE FIRST LINE: super.onSharedPreferenceChanged(sharedPreferences, key)
+        requireNotNull(key) { "The 'key' argument to method 'onSharedPreferenceChanged' is null." }
         val pref = findPreference<Preference>(key)
         if (pref != null)
             setSummary(pref)
@@ -45,6 +47,12 @@ abstract class PreferenceFragmentAutomaticSummary:
             is EditTextPreference -> pref.summary = pref.text
             is ListPreference -> pref.summary = pref.entry
             is MultiSelectListPreference -> pref.summary = pref.values.toTypedArray().contentToString()
+//            is PreferenceCategory -> {
+//                // Loop through child preferences:
+//                for (i in 0 until pref.preferenceCount) {
+//                    setSummary(pref.getPreference(i))
+//                }
+//            }
         }
     }
 }

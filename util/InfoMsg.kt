@@ -15,7 +15,7 @@ object InfoMsg {
             .show()
     }
 
-    fun modalDialog (
+    fun modalDialog ( // https://tinyurl.com/InfoMsg
         title: String? = null,
         msg: String,
         funcToCallOnPositiveResponse: () -> Unit,

@@ -9,20 +9,24 @@ import androidx.appcompat.view.menu.MenuBuilder
 import ca.intfast.iftimer.R
 import ca.intfast.iftimer.appwide.DurationController
 import ca.intfast.iftimer.cycle.CycleController
+import ca.intfast.iftimer.databinding.ActivityStatsBinding
 import ca.intfast.iftimer.db.DbColumn
 import ca.intfast.iftimer.db.DbTable
 import ca.intfast.iftimer.util.CrudHelper
 import ca.intfast.iftimer.util.InfoMsg
-import kotlinx.android.synthetic.main.activity_stats.*
 import kotlin.math.roundToInt
 
 class StatsActivity: AppCompatActivity() {
+    private lateinit var b: ActivityStatsBinding // "b"inding
     private val cyc = CycleController(this)
     private val crudHelper = CrudHelper(this)
     /***********************************************************************************************************************/
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_stats)
+
+        b = ActivityStatsBinding.inflate(layoutInflater)
+        setContentView(b.root)
+
         setTitle(R.string.word__stats)
 
         populate()
@@ -32,6 +36,16 @@ class StatsActivity: AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.setDisplayShowHomeEnabled(true)
     } // onCreate()
+    /***********************************************************************************************************************/
+//    private fun deletePrevCycle() {
+//        cyc.deletePrevCycle()
+//
+//        if (cyc.atLeastOneCycleExistsForStats()) {
+//            populate() // refresh screen to reflect the change
+//        } else {
+//            finish()
+//        }
+//    } // deletePrevCycle()
     /***********************************************************************************************************************/
     private fun deleteStats() {
         cyc.deleteStats()
@@ -43,35 +57,35 @@ class StatsActivity: AppCompatActivity() {
 
         // PREVIOUS CYCLE:
         var s = retrieveStats("1") // average for one cycle means the cycle itself
-        prevMeal1.text = if (s.avgMeal1!! > 0) dur.stringFromMinutes(s.avgMeal1!!) else "---"
-        prevMeal2.text = if (s.avgMeal2!! > 0) dur.stringFromMinutes(s.avgMeal2!!) else "---"
-        prevEw.text = if (s.avgEw!! > 0) dur.stringFromMinutes(s.avgEw!!) else "---"
+        b.prevMeal1.text = if (s.avgMeal1!! > 0) dur.stringFromMinutes(s.avgMeal1!!) else "---"
+        b.prevMeal2.text = if (s.avgMeal2!! > 0) dur.stringFromMinutes(s.avgMeal2!!) else "---"
+        b.prevEw.text = if (s.avgEw!! > 0) dur.stringFromMinutes(s.avgEw!!) else "---"
 
         // LAST 7 CYCLES:
         s = retrieveStats("7")
-        lastCyclesTitle7.text = getString(R.string.stats__last_n_cycles, "7")
-        avgMeal7.text = if (s.avgMeal!! > 0) dur.stringFromMinutes(s.avgMeal!!) else "---"
-        avgEw7.text = if (s.avgEw!! > 0) dur.stringFromMinutes(s.avgEw!!) else "---"
-        omadsNum7.text = if (s.omadsCount!! > 0) "${s.omadsCount} (${s.omadsPct}%)" else "---"
+        b.lastCyclesTitle7.text = getString(R.string.stats__last_n_cycles, "7")
+        b.avgMeal7.text = if (s.avgMeal!! > 0) dur.stringFromMinutes(s.avgMeal!!) else "---"
+        b.avgEw7.text = if (s.avgEw!! > 0) dur.stringFromMinutes(s.avgEw!!) else "---"
+        b.omadsNum7.text = if (s.omadsCount!! > 0) "${s.omadsCount} (${s.omadsPct}%)" else "---"
 
         // LAST 30 CYCLES:
         s = retrieveStats("30")
-        lastCyclesTitle30.text = getString(R.string.stats__last_n_cycles, "30")
-        avgMeal30.text = if (s.avgMeal!! > 0) dur.stringFromMinutes(s.avgMeal!!) else "---"
-        avgEw30.text = if (s.avgEw!! > 0) dur.stringFromMinutes(s.avgEw!!) else "---"
-        omadsNum30.text = if (s.omadsCount!! > 0) "${s.omadsCount} (${s.omadsPct}%)" else "---"
+        b.lastCyclesTitle30.text = getString(R.string.stats__last_n_cycles, "30")
+        b.avgMeal30.text = if (s.avgMeal!! > 0) dur.stringFromMinutes(s.avgMeal!!) else "---"
+        b.avgEw30.text = if (s.avgEw!! > 0) dur.stringFromMinutes(s.avgEw!!) else "---"
+        b.omadsNum30.text = if (s.omadsCount!! > 0) "${s.omadsCount} (${s.omadsPct}%)" else "---"
 
         // LAST 365 CYCLES:
         s = retrieveStats("365")
-        lastCyclesTitle365.text = getString(R.string.stats__last_n_cycles, "365")
-        avgMeal365.text = if (s.avgMeal!! > 0) dur.stringFromMinutes(s.avgMeal!!) else "---"
-        avgEw365.text = if (s.avgEw!! > 0) dur.stringFromMinutes(s.avgEw!!) else "---"
-        omadsNum365.text = if (s.omadsCount!! > 0) "${s.omadsCount} (${s.omadsPct}%)" else "---"
+        b.lastCyclesTitle365.text = getString(R.string.stats__last_n_cycles, "365")
+        b.avgMeal365.text = if (s.avgMeal!! > 0) dur.stringFromMinutes(s.avgMeal!!) else "---"
+        b.avgEw365.text = if (s.avgEw!! > 0) dur.stringFromMinutes(s.avgEw!!) else "---"
+        b.omadsNum365.text = if (s.omadsCount!! > 0) "${s.omadsCount} (${s.omadsPct}%)" else "---"
 
         // OMADs:
-        omadsNumTitle7.text = getString(R.string.stats__cycles, "7")
-        omadsNumTitle30.text = getString(R.string.stats__cycles, "30")
-        omadsNumTitle365.text = getString(R.string.stats__cycles, "365")
+        b.omadsNumTitle7.text = getString(R.string.stats__cycles, "7")
+        b.omadsNumTitle30.text = getString(R.string.stats__cycles, "30")
+        b.omadsNumTitle365.text = getString(R.string.stats__cycles, "365")
     } // populate()
     /***********************************************************************************************************************/
     private fun retrieveStats(rowsLimit: String): Stats {
@@ -85,20 +99,20 @@ class StatsActivity: AppCompatActivity() {
                 "SELECT COUNT(1) " +
                   "FROM ${DbTable.CYCLE} " +
                  "WHERE ${DbColumn.ID} IN (SELECT ${DbColumn.ID} " + // limit by the same condition as the overall query...
-                                            "FROM ${DbTable.CYCLE} " +
-                                           "WHERE ${DbColumn.FASTING_START} IS NOT NULL " +
-                                        "ORDER BY ${DbColumn.ID} DESC " +
-                                           "LIMIT $rowsLimit) " +
+                                                                            "FROM ${DbTable.CYCLE} " +
+                                                                         "WHERE ${DbColumn.FASTING_START} IS NOT NULL " +
+                                                                   "ORDER BY ${DbColumn.ID} DESC " +
+                                                                             "LIMIT $rowsLimit) " +
                    "AND ${DbColumn.ID} IN (SELECT ${DbColumn.ID} " + // ...and exclude OMADs from that population
-                                            "FROM ${DbTable.CYCLE} " +
-                                           "WHERE ${DbColumn.MEAL_2_START} IS NOT NULL)" +
+                                                                        "FROM ${DbTable.CYCLE} " +
+                                                                     "WHERE ${DbColumn.MEAL_2_START} IS NOT NULL)" +
             ") AS ${DbColumn.MEAL_2_COUNT} " +
             "FROM ${DbTable.CYCLE} " +
             "WHERE ${DbColumn.ID} IN (SELECT ${DbColumn.ID} " +
-                                       "FROM ${DbTable.CYCLE} " +
-                                      "WHERE ${DbColumn.FASTING_START} IS NOT NULL " +
-                                   "ORDER BY ${DbColumn.ID} DESC " +
-                                      "LIMIT $rowsLimit)"
+                                                                       "FROM ${DbTable.CYCLE} " +
+                                                                    "WHERE ${DbColumn.FASTING_START} IS NOT NULL " +
+                                                              "ORDER BY ${DbColumn.ID} DESC " +
+                                                                        "LIMIT $rowsLimit)"
 
         val stats = crudHelper.retrieveOne<Stats>(sqlSelect, required = true)!!
 
@@ -130,8 +144,8 @@ class StatsActivity: AppCompatActivity() {
     // ----------------------------------------------------------------------------------------------------------------------
 
     /***********************************************************************************************************************/
-    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-        when (item?.itemId) {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
             R.id.delete_stats -> {
                 InfoMsg.modalDialog(
                     title = item.title.toString(),
@@ -142,7 +156,7 @@ class StatsActivity: AppCompatActivity() {
             }
             android.R.id.home -> finish() // user clicked "back" icon (left arrow) on the menu bar
         }
-        return super.onOptionsItemSelected(item!!)
+        return super.onOptionsItemSelected(item)
     } // onOptionsItemSelected()
     /***********************************************************************************************************************/
     @SuppressLint("RestrictedApi")

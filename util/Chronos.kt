@@ -12,6 +12,7 @@ Encapsulates the fuss with date/time formats and parsing.
 Useful when a time/date value, which should be manipulated in code in its original type,
 is stored somewhere as String (for example, in Preferences or SQLite DB).
 Chronos is the personification of time in pre-Socratic philosophy and later literature (https://en.wikipedia.org/wiki/Chronos)
+https://tinyurl.com/ChronosObj
 ****************************************************************************************************************************/
 
 object Chronos {

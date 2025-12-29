@@ -23,6 +23,16 @@ class CycleController(private val context: Context): CrudHelper(context) {
         return currCycle
     } // getCurrCycle()
     /***********************************************************************************************************************/
+//    fun getCurrAppStateStartLdt(): LocalDateTime {
+//        return when (true) {
+//            AppState.meal1 -> currCycle.meal1Start!!
+//            AppState.betweenMeals -> currCycle.betweenMealsStart!!
+//            AppState.meal2 -> currCycle.meal2Start!!
+//            AppState.fasting -> currCycle.fastingStart!!
+//            else -> throw Exception("CycleController.getCurrAppStateStartLdt(): Invalid AppState ${AppState.curr}.")
+//        }
+//    } // getCurrAppStateStartLdt()
+    /***********************************************************************************************************************/
     fun loadCurrCycleFromDb() {
         val retrievedCurrCycle = retrieveOne<Cycle>(DbTable.CYCLE, whereClause = "fastingFinish IS NULL", required = false)
         currCycleExistsInDb = (retrievedCurrCycle != null)
@@ -84,6 +94,18 @@ class CycleController(private val context: Context): CrudHelper(context) {
         this.writableDatabase.delete(DbTable.CYCLE, whereClause, null)
     } // deleteStats()
     /***********************************************************************************************************************/
+//    fun deletePrevCycle() {
+//        writableDatabase.delete(DbTable.CYCLE, "fastingStart IS NOT NULL", null)
+//
+//        // The before-previous cycle (if existed) has just become the new previous. We need to do some changes in it.
+//        val newPrevCycle = retrievePrevCycle() // with the largest id which is smaller than currCycle.id
+//        if (newPrevCycle != null) {
+//            newPrevCycle.fastingFinish = if (AppState.fasting) null else currCycle.meal1Start
+//            // todo: on AppState.fasting, test to ensure that the fasting timer is now counting from newPrevCycle.fastingStart
+//        }
+//        // todo: in the cycle, which just became Prev (if exists), make fastingStart = null
+//    } // deletePrevCycle()
+    /***********************************************************************************************************************/
     fun retrieveCycleList(): ArrayList<Cycle> { // for DbSpyActivity
         return retrieveList(tableName = DbTable.CYCLE, orderByClause = DbColumn.ID + " DESC")
     } // retrieveCycleList()
@@ -95,6 +117,23 @@ class CycleController(private val context: Context): CrudHelper(context) {
         AppState.fasting = true
         AppPrefs.put(PrefKey.LAST_APP_STATE_SET_BY_USER, AppState.FASTING, context) // for MainActivity.onResumeCheckInactivity()
     } // makeCurrCycleOmad()
+    /***********************************************************************************************************************/
+//    fun getStageStartLdt(): LocalDateTime {
+//        return when (true) {
+//            AppState.meal1        -> currCycle.meal1Start!!
+//            AppState.betweenMeals -> currCycle.betweenMealsStart!!
+//            AppState.meal2        -> currCycle.meal2Start!!
+//            AppState.fasting      -> currCycle.fastingStart!!
+//            else                  -> throw Exception("None of AppState properties is true.")
+//        }
+//    }
+//    /***********************************************************************************************************************/
+//    fun cancelOmad() { // rolls back the action of makeCurrCycleOmad()
+//        currCycle.fastingStart = null // it was previously populated in makeCurrCycleOmad()
+//        update(currCycle)
+//        AppState.betweenMeals = true
+//        AppPrefs.put(PrefKey.LAST_APP_STATE_SET_BY_USER, AppState.BETWEEN_MEALS, context) // for MainActivity.onResumeCheckInactivity()
+//    } // cancelOmad()
     /***********************************************************************************************************************/
 
     // ----------------------------------------------------------------------------------------------------------------------

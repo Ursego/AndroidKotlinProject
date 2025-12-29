@@ -15,4 +15,16 @@ object PrefKey {
     const val VIBRATE_ON_ALARM = "VIBRATE_ON_ALARM"
     const val VIBRATE_ON_BUTTON_CLICK = "VIBRATE_ON_BUTTON_CLICK"
     const val USE_LONG_CLICK = "USE_LONG_CLICK"
+//    const val SHOW_SECONDS = "SHOW_SECONDS"
+//    const val REMIND_GO_TO_SLEEP = "REMIND_GO_TO_SLEEP"
+//    const val MINIMUM_BEFORE_SLEEP_HOURS = "MINIMUM_BEFORE_SLEEP_HOURS"
 }
+
+/*
+AppPrefs.put(PrefKey.REMINDER_TITLE, aaa, this)
+val aaa = AppPrefs.getBoolean(PrefKey.BEEP_ON_ALARM, this)
+val aaa = AppPrefs.getInt(PrefKey.MIN_BETWEEN_MEALS_HOURS, this)
+if (AppPrefs.getBoolean(PrefKey.REMIND_1_HOUR_BEFORE_EW_END, this)) {
+
+    }
+ */

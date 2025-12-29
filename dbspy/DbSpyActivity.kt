@@ -4,18 +4,20 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AppCompatActivity
-import ca.intfast.iftimer.R
 import ca.intfast.iftimer.cycle.CycleController
-import kotlinx.android.synthetic.main.activity_db_spy.*
+import ca.intfast.iftimer.databinding.ActivityDbSpyBinding
 
 class DbSpyActivity: AppCompatActivity() {
-    private lateinit var cycleController: CycleController
+    private lateinit var b: ActivityDbSpyBinding // "b"inding
+    private lateinit var cyc: CycleController
     /***********************************************************************************************************************/
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_db_spy)
 
-        cycleController = CycleController(this)
+        b = ActivityDbSpyBinding.inflate(layoutInflater)
+        setContentView(b.root)
+
+        cyc = CycleController(this)
 
         // Display "back" icon (left arrow) on the menu bar:
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -25,7 +27,7 @@ class DbSpyActivity: AppCompatActivity() {
     }
     /***********************************************************************************************************************/
     private fun populateListView() {
-        val cycleList = cycleController.retrieveCycleList()
+        val cycleList = cyc.retrieveCycleList()
         val stringList = ArrayList<String>(cycleList.size)
 
         for (cycle in cycleList) {
@@ -34,14 +36,15 @@ class DbSpyActivity: AppCompatActivity() {
             stringList.add(rowAsString)
         }
 
-        listView.adapter = ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, stringList)
+        b.listView.adapter =
+            ArrayAdapter(this@DbSpyActivity, android.R.layout.simple_list_item_1, stringList)
     }
     /***********************************************************************************************************************/
-    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-        when (item?.itemId) {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
             android.R.id.home -> finish() // user clicked "back" icon (left arrow) on the menu bar
         }
-        return super.onOptionsItemSelected(item!!)
+        return super.onOptionsItemSelected(item)
     }
     /***********************************************************************************************************************/
 }

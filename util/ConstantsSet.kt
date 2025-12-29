@@ -5,6 +5,7 @@ import android.content.Context
 /****************************************************************************************************************************
 To be implemented by classes whose constants are used to populate multi-values Preferences
 (ListPreference, MultiSelectListPreference, DropDownPreference).
+Example of use: https://tinyurl.com/PrefsFromConstants
 ****************************************************************************************************************************/
 
 interface ConstantsSet<T> {
@@ -56,7 +57,7 @@ interface ConstantsSet<T> {
     fun getResourceId(constantValue: T): Int
     // Returns R.string.XXX to obtain the human-readable text for this constant.
 
-    /* A sample implementation:
+    /* Sample implementation:
     override fun getResourceId(constantValue: String): Int {
         return when (constantValue) {
             FIRST -> R.string.whatever__first
