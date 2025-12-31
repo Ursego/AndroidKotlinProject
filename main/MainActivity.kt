@@ -800,7 +800,6 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
     /***********************************************************************************************************************/
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         var url: String? = null
-        val openLinksInRussian = easternSlavicLangExistsInDevice()
 
         when (item.itemId) {
             R.id.cancel_curr_app_state -> {
@@ -820,22 +819,19 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
                 }
             }
 
-            R.id.open_pref_activity         -> startActivity(Intent(this, PrefActivity::class.java))
+            R.id.open_pref_activity  -> startActivity(Intent(this, PrefActivity::class.java))
 
-            R.id.open_home_page             -> url = if (openLinksInRussian) "http://intfast.ca/периодическое-голодание-таймер/"
-                                                                        else "http://intfast.ca/intermittent-fasting-timer-app-android/"
-            R.id.open_how_it_works          -> url = if (openLinksInRussian) "http://forumy.ca/viewtopic.php?t=6511"
-                                                                        else "http://intfast.ca/how-intermittent-fasting-works/"
-            R.id.open_practical_instruction -> url = if (openLinksInRussian) "http://forumy.ca/viewtopic.php?t=6513"
-                                                                        else "http://intfast.ca/instruction-how-to-start-intermittent-fasting/"
-            R.id.open_fb_group              -> url = if (openLinksInRussian) "https://www.facebook.com/groups/PeriodicheskoeGolodanie/"
-                                                                        else "https://www.facebook.com/groups/IntFast.ca/"
+            R.id.open_home_page -> url = "http://intfast.ca/intermittent-fasting-timer-app-android/"
+            R.id.open_how_it_works -> url = "http://intfast.ca/how-intermittent-fasting-works/"
+            R.id.open_practical_instruction -> url = "http://intfast.ca/instruction-how-to-start-intermittent-fasting/"
+            R.id.open_fb_group -> url =  "https://www.facebook.com/groups/IntFast.ca/"
 
-            R.id.rate_app                   -> url = "market://details?id=$packageName" // todo change for app stores other than Google Play
+            R.id.rate_app -> url = "market://details?id=$packageName" // todo change for app stores other than Google Play
 
-            R.id.share                      -> share(subject = getString(R.string.word__share_subject),
-                                                         msg = getString(R.string.word__share_msg), context = this)
-            R.id.copyright                  -> msg.msgCopyright()
+            R.id.share -> share(subject = getString(R.string.word__share_subject),
+                                                msg = getString(R.string.word__share_msg),
+                                           context = this)
+            R.id.copyright -> msg.msgCopyright()
 
 //            R.id.open_db_spy_activity       -> startActivity(Intent(this, DbSpyActivity::class.java))
         }
