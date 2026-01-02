@@ -8,14 +8,14 @@ import ca.intfast.iftimer.cycle.CycleController
 import ca.intfast.iftimer.databinding.ActivityDbSpyBinding
 
 class DbSpyActivity: AppCompatActivity() {
-    private lateinit var b: ActivityDbSpyBinding // "b"inding
+    private lateinit var binding: ActivityDbSpyBinding
     private lateinit var cyc: CycleController
     /***********************************************************************************************************************/
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        b = ActivityDbSpyBinding.inflate(layoutInflater)
-        setContentView(b.root)
+        binding = ActivityDbSpyBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         cyc = CycleController(this)
 
@@ -28,15 +28,8 @@ class DbSpyActivity: AppCompatActivity() {
     /***********************************************************************************************************************/
     private fun populateListView() {
         val cycleList = cyc.retrieveCycleList()
-        val stringList = ArrayList<String>(cycleList.size)
-
-        for (cycle in cycleList) {
-            val rowAsString = "${cycle.id}: m1='${cycle.meal1Start}', b='${cycle.betweenMealsStart}', " +
-                    "m2='${cycle.meal2Start}', fs='${cycle.fastingStart}', ff='${cycle.fastingFinish}'"
-            stringList.add(rowAsString)
-        }
-
-        b.listView.adapter =
+        val stringList = cycleList.map { it.toString() }
+        binding.listView.adapter =
             ArrayAdapter(this@DbSpyActivity, android.R.layout.simple_list_item_1, stringList)
     }
     /***********************************************************************************************************************/

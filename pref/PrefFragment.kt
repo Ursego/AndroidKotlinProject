@@ -17,7 +17,7 @@ class PrefFragment: PreferenceFragmentAutomaticSummary(), SharedPreferences.OnSh
         val screen = preferenceManager.createPreferenceScreen(preferenceManager.context)
         var dropDownPref: DropDownPreference
         var switchPref: SwitchPreferenceCompat
-        var cont = requireContext()
+        val cont = requireContext()
 
         // Maximum eating window length (hours):
         dropDownPref = DropDownPreference(cont)
@@ -35,7 +35,7 @@ class PrefFragment: PreferenceFragmentAutomaticSummary(), SharedPreferences.OnSh
         dropDownPref.key = PrefKey.MAXIMUM_MEAL_MINUTES
         dropDownPref.title = getString(R.string.pref_title__max_meal_minutes)
         dropDownPref.isSingleLineTitle = false
-        dropDownPref.entryValues /* what we save */ = arrayOf(/*"1",*/ "15", "20", "25", "30", "35", "40")
+        dropDownPref.entryValues /* what we save */ = arrayOf("15", "20", "25", "30", "35", "40")
         dropDownPref.entries /* what we show to user */ = dropDownPref.entryValues
         dropDownPref.setDefaultValue("30")
         dropDownPref.setOnPreferenceChangeListener { preference, newValue -> ewOk(preference, newValue, cont) }
@@ -139,10 +139,23 @@ class PrefFragment: PreferenceFragmentAutomaticSummary(), SharedPreferences.OnSh
 //        prefCategory.isSingleLineTitle = false
 //        screen.addPreference(prefCategory)
 
-
         preferenceScreen = screen
     }
 
+    /**
+     * Validates that the "Eating Window" settings are mathematically consistent.
+     *
+     * This function checks if two meals of the specified duration, separated by the specified
+     * gap, can actually fit within the total eating window duration.
+     *
+     * Formula: `(2 * MaxMealMinutes) + (MinGapHours * 60) <= (MaxEwHours * 60)`
+     *
+     * @param preference The preference object being changed.
+     * @param newValue The proposed new value for the preference.
+     * @param cont The application context.
+     * @return `true` if the new configuration is valid; `false` otherwise (showing an error dialog to the user).
+     * @throws Exception If called for a preference key other than meal minutes, gap hours, or EW hours.
+     */
     private fun ewOk(preference: Preference, newValue: Any, cont: Context): Boolean {
         val maxMealMinutes: Int
         val minBetweenMealsHours: Int

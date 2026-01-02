@@ -1,3 +1,21 @@
+/****************************************************************************************************************************
+AppPrefs which facilitates storing values in SharedPreferences.
+It abstracts away the complexity of obtaining SharedPreferences, handling potential type casting errors,
+and converting complex types (like `LocalDate`, `LocalDateTime`, etc.) to and from Strings for storage.
+For example, to read a LocalDateTime, simply call:
+val updatedAt = AppPrefs.getLocalDateTime(DbColumn.UPDATED_AT, context)
+
+AppPrefs simplifies creation of properties which use SharedPreferences instead of a backing instance variable, for example:
+
+class MyExampleActivity : AppCompatActivity() {
+    var isInvoicePrintable
+        get() = AppPrefs.getBoolean("isInvoicePrintable", this)
+        set(value) = AppPrefs.put("isInvoicePrintable", value, this)
+    ...
+}
+
+https://tinyurl.com/SharedPreferences
+****************************************************************************************************************************/
 package ca.intfast.iftimer.util
 
 import android.content.Context
@@ -6,6 +24,33 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
+/**
+ * Object which facilitates storing and retrieving values (including non-String types) in SharedPreferences.
+ *
+ * `AppPrefs` abstracts away the complexity of obtaining `SharedPreferences`, handling potential type casting errors,
+ * and converting complex types (like `LocalDate`, `LocalDateTime`, etc.) to and from Strings for storage.
+ *
+ * It is particularly useful for creating properties that use `SharedPreferences` as a backing field instead of
+ * a local variable.
+ *
+ * **Usage Example:**
+ * ```kotlin
+ * class MyExampleActivity : AppCompatActivity() {
+ *     private val uuid = UUID.randomUUID().toString()
+ *
+ *     // Property backed by SharedPreferences
+ *     var isPrintable: Boolean
+ *         get() = AppPrefs.getBoolean("${uuid}isPrintable", this)
+ *         set(value) = AppPrefs.put("${uuid}isPrintable", value, this)
+ *
+ *     fun readDateExample() {
+ *         // Reading a LocalDateTime directly
+ *         val lastUpdated = AppPrefs.getLocalDateTime("updated_at_key", this)
+ *     }
+ * }
+ *
+ * @see [SharedPreferences Documentation](https://developer.android.com/reference/android/content/SharedPreferences)
+ */
 object AppPrefs {
     fun getString(key: String, context: Context): String {
         val appSharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)!!

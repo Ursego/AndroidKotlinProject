@@ -1,3 +1,7 @@
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// Before you add this class to your app, create CustomSQLiteOpenHelper: https://tinyurl.com/SQLiteCRUD
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 package ca.intfast.iftimer.util
 
 import android.content.Context
@@ -6,15 +10,12 @@ import android.database.sqlite.SQLiteDoneException
 import ca.intfast.iftimer.db.CustomSQLiteOpenHelper
 import kotlin.reflect.KFunction
 
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-// Before you add this class to your app, create CustomSQLiteOpenHelper: https://tinyurl.com/SQLiteCRUD
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 open class CrudHelper(context: Context): CustomSQLiteOpenHelper(context) {
     // ----------------------------------------------------------------------------------------------------------------------
-    // Encapsulates the typical CRUD functions applicable to DB entities.
+    // CrudHelper encapsulates the typical CRUD operations we usually apply on DB entities.
     // In most cases, this class can be instantiated and used directly, with no need to be extended.
-    // But if some entity's CRUD logic is less straightforward, you can inherit from CrudHelper and add/override functions:
+    // But if some entity's CRUD logic is less straightforward, you can inherit from CrudHelper
+    //      and add/override functions, providing the custom logic:
     // class DeptCrudHelper(context: Context): CrudHelper(context) { ... }
     // ----------------------------------------------------------------------------------------------------------------------
     // Model (entity) classes (like Emp, Dept), for which you want to call CRUD functions, must implement Crudable interface.
@@ -27,7 +28,8 @@ open class CrudHelper(context: Context): CustomSQLiteOpenHelper(context) {
     // That's it! Now, each function of the Activity can call the CRUD functions of crudHelper. For example:
     //
     // val emp = Emp()
-    // newAutoincrementedId = crudHelper.insert(emp)
+    // ...
+    // newAutoincrementId = crudHelper.insert(emp)
     // ...
     // crudHelper.update(emp)
     // ...
@@ -39,7 +41,7 @@ open class CrudHelper(context: Context): CustomSQLiteOpenHelper(context) {
     // val empLastNames = crudHelper.retrieveList<CrudableString>(sql)
     //
     // If no fitting function is found in crudHelper, the Activity can call the functions of
-    // crudHelper.writableDatabase & crudHelper.readableDatabase directly.
+    //      crudHelper.writableDatabase & crudHelper.readableDatabase directly.
     // For example, to run an SQL statement, which returns nothing (or you don't need the returned value), write:
     // crudHelper.writableDatabase.execSQL("...")
     // ----------------------------------------------------------------------------------------------------------------------
@@ -49,15 +51,18 @@ open class CrudHelper(context: Context): CustomSQLiteOpenHelper(context) {
     // ----------------------------------------------------------------------------------------------------------------------
 
     /***********************************************************************************************************************/
-    inline fun <reified T: Crudable> retrieveList(sqlSelect: String, selectionArgs: Array<String>? = null): ArrayList<T> {
-        // The number, types and order of the fields in the SELECT statement must correspond the fields, copied
+    inline fun <reified T: Crudable> retrieveList(
+        sqlSelect: String,
+        selectionArgs: Array<String>? = null
+    ): ArrayList<T> {
+        // The number, types and order of the fields in the SELECT statement must fit the fields, copied
         // in extractContentValues() and populateFromCursor() of the class, passed as T.
 
-        // If you need to retrieve a recordset, which doesn't correspond to a particular table (for example,
+        // If you need to retrieve a recordset, which doesn't map to a particular table (for example,
         // to SELECT FROM a few joined tables, or grab statistics), then create (an pass to this function as <T>)
         // a custom class - just for that purpose. In this case, follow these rules:
         //      1. If the SQL SELECT has computed fields, give them aliases to be accessed by name in code.
-        //      2. Override populateFromCursor() as usually (it's used on retrieval).
+        //      2. Override populateFromCursor() in the regular way (it's used on retrieval).
         //      3. Override TABLE_NAME, id and extractContentValues() this way:
 
         // override val TABLE_NAME: String
@@ -74,7 +79,6 @@ open class CrudHelper(context: Context): CustomSQLiteOpenHelper(context) {
         if (!db.isOpen) throw Exception("CrudHelper.retrieveList(): DB is closed.")
 
         val cursor = db.rawQuery(sqlSelect, selectionArgs)
-            ?: throw Exception("CrudHelper.retrieveList(): rawQuery() returned null cursor by '$sqlSelect'.")
         cursor.use {
             while (cursor.moveToNext()) {
                 // The following two code lines is a dirty trick to create an instance of a generic type.
@@ -92,22 +96,30 @@ open class CrudHelper(context: Context): CustomSQLiteOpenHelper(context) {
         return entities
     }
     /***********************************************************************************************************************/
-    inline fun <reified T: Crudable> retrieveList
-                (tableName: String, whereClause: String? = null, orderByClause: String? = null): ArrayList<T> {
-        val sql = StringBuffer("SELECT * FROM $tableName")
-        if (whereClause != null) sql.append(" WHERE $whereClause")
-        if (orderByClause != null) sql.append(" ORDER BY $orderByClause")
-        return this.retrieveList(sql.toString())
+    inline fun <reified T: Crudable> retrieveList(
+        tableName: String,
+        whereClause: String? = null,
+        orderByClause: String? = null
+    ): ArrayList<T> {
+        val sql = buildString {
+            append("SELECT * FROM $tableName")
+            whereClause?.let { append(" WHERE $it") }
+            orderByClause?.let { append(" ORDER BY $it") }
+        }
+        return this.retrieveList(sql)
     }
     /***********************************************************************************************************************/
 
     // ----------------------------------------------------------------------------------------------------------------------
-    // retrieveOne() [SELECTs one single record]:
+    // Functions to SELECT one record:
     // ----------------------------------------------------------------------------------------------------------------------
 
     /***********************************************************************************************************************/
-    inline fun <reified T: Crudable> retrieveOne
-                (sqlSelect: String, selectionArgs: Array<String>? = null, required: Boolean = false): T? {
+    inline fun <reified T: Crudable> retrieveRecord(
+        sqlSelect: String,
+        selectionArgs: Array<String>? = null,
+        required: Boolean = false
+    ): T? {
         val entities: ArrayList<T> = this.retrieveList(sqlSelect, selectionArgs)
         return when (entities.size) {
             1 -> entities[0]
@@ -120,95 +132,121 @@ open class CrudHelper(context: Context): CustomSQLiteOpenHelper(context) {
         }
     }
     /***********************************************************************************************************************/
-    inline fun <reified T: Crudable> retrieveOne
-                (tableName: String, id: Int, idColName: String = "_id", required: Boolean = true): T? {
-        return this.retrieveOne(sqlSelect = "SELECT * FROM $tableName WHERE $idColName=$id", required = required)
+    inline fun <reified T: Crudable> retrieveRecord (
+        tableName: String,
+        id: Int,
+        idColName: String = "_id",
+        required: Boolean = true
+    ): T? {
+        return this.retrieveRecord(sqlSelect = "SELECT * FROM $tableName WHERE $idColName=$id", required = required)
     }
     /***********************************************************************************************************************/
-    inline fun <reified T: Crudable> retrieveOne
-                (tableName: String, whereClause: String, selectionArgs: Array<String>? = null, required: Boolean = true): T? {
-        return this.retrieveOne(sqlSelect = "SELECT * FROM $tableName WHERE $whereClause",
-            selectionArgs = selectionArgs, required = required)
+    inline fun <reified T: Crudable> retrieveRecord(
+        tableName: String,
+        whereClause: String,
+        selectionArgs: Array<String>? = null,
+        required: Boolean = true
+    ): T? {
+        return this.retrieveRecord(
+            sqlSelect = "SELECT * FROM $tableName WHERE $whereClause",
+            selectionArgs = selectionArgs,
+            required = required
+        )
     }
     /***********************************************************************************************************************/
 
     // ----------------------------------------------------------------------------------------------------------------------
-    // Functions which SELECT one scalar value:
+    // Functions to SELECT one scalar value:
     // ----------------------------------------------------------------------------------------------------------------------
 
     /***********************************************************************************************************************/
-    fun queryForString(sqlSelect: String, required: Boolean = false): String? {
-        // Executes a statement that returns a scalar String value. For example, SELECT last_name FROM emp WHERE emp_id = 123
+    // Executes a statement that returns a scalar String value. For example, SELECT last_name FROM emp WHERE emp_id = 123
+    fun retrieveString(
+        sqlSelect: String,
+        required: Boolean = false
+    ): String? {
         val result: String
 
         try {
             val statement = this.readableDatabase.compileStatement(sqlSelect)
             result = statement.simpleQueryForString()
         } catch (e: SQLException /* compileStatement() failed */) {
-            throw Exception("CrudHelper.queryForString(): '$sqlSelect' is not a valid SQL statement.")
+            throw Exception("'$sqlSelect' is not a valid SQL statement.")
         } catch (e: SQLiteDoneException /* simpleQueryForString() returned zero rows */) {
-            if (required) throw Exception("CrudHelper.queryForString(): no data found by '$sqlSelect'.")
+            if (required) throw Exception("No data found by this query: '$sqlSelect'.")
             return null
         }
 
         return result
     }
     /***********************************************************************************************************************/
-    fun queryForLong(sqlSelect: String, required: Boolean = false): Long? {
-        // Executes a statement that returns a scalar Long value. For example, SELECT COUNT(*) FROM emp
+    // Executes a statement that returns a scalar String value. For example, SELECT last_name FROM emp WHERE emp_id = 123
+    fun retrieveLong(
+        sqlSelect: String,
+        required: Boolean = false
+    ): Long? {
         val result: Long
 
         try {
             val statement = this.readableDatabase.compileStatement(sqlSelect)
             result = statement.simpleQueryForLong()
         } catch (e: SQLException /* compileStatement() failed */) {
-            throw Exception("CrudHelper.queryForLong(): '$sqlSelect' is not a valid SQL statement.")
+            throw Exception("CrudHelper.retrieveLong(): '$sqlSelect' is not a valid SQL statement.")
         } catch (e: SQLiteDoneException /* simpleQueryForLong() returned zero rows */) {
-            if (required) throw Exception("CrudHelper.queryForLong(): no data found by '$sqlSelect'.")
+            if (required) throw Exception("CrudHelper.retrieveLong(): no data found by '$sqlSelect'.")
             return null
         }
 
         return result
     }
     /***********************************************************************************************************************/
-    fun queryForDouble(sqlSelect: String, required: Boolean = false): Double? {
-        // Executes a statement that returns a scalar String value convertible to Double.
-        // For example, SELECT salary FROM emp WHERE emp_id = 123
+    // Executes a statement that returns a scalar String value convertible to Double.
+    // For example, SELECT salary FROM emp WHERE emp_id = 123
+    fun retrieveDouble(
+        sqlSelect: String,
+        required: Boolean = false
+    ): Double? {
         val resultAsDouble: Double
-        val resultAsString = this.queryForString(sqlSelect, required)
+        val resultAsString = this.retrieveString(sqlSelect, required)
         if (resultAsString == null && !required) return null
         // if (result == null && required), then an Exception has already been thrown by queryForString()
 
         try {
             resultAsDouble = resultAsString!!.toDouble()
         } catch (e: NumberFormatException) {
-            throw Exception("CrudHelper.queryForDouble(): The value, retrieved by '$sqlSelect', is $resultAsString. " +
+            throw Exception("CrudHelper.retrieveDouble(): The value, retrieved by '$sqlSelect', is $resultAsString. " +
                     "It cannot be converted to Double.")
         }
 
         return resultAsDouble
     }
     /***********************************************************************************************************************/
-    fun queryForBoolean(sqlSelect: String, required: Boolean = false): Boolean? {
-        // Executes a statement that returns a scalar Long value which can be treated as Boolean (i.e. 0 or 1).
-        // For example, SELECT is_active FROM emp WHERE emp_id = 123
-        val result = this.queryForLong(sqlSelect, required)
+    // Executes a statement that returns a scalar Long value which can be treated as Boolean (i.e. 0 or 1).
+    // For example, SELECT is_active FROM emp WHERE emp_id = 123
+    fun retrieveBoolean(
+        sqlSelect: String,
+        required: Boolean = false
+    ): Boolean? {
+        val result = this.retrieveLong(sqlSelect, required)
         if (result == null && !required) return null
-        // if (result == null && required), then an Exception has already been thrown by queryForLong()
+        // if (result == null && required), then an Exception has already been thrown by retrieveLong()
 
         when (result) {
             1L -> return true
             0L -> return false
         }
 
-        throw Exception("CrudHelper.queryForBoolean(): The value, retrieved by '$sqlSelect', is $result. " +
+        throw Exception("CrudHelper.retrieveBoolean(): The value, retrieved by '$sqlSelect', is $result. " +
                 "To be treated as Boolean, it must be 0 or 1.")
     }
     /***********************************************************************************************************************/
-    fun exists(tableName: String, whereClause: String? = null): Boolean {
-        // Mimics the EXISTS statement of SQL.
+    // Mimics the EXISTS statement of SQL.
+    fun exists(
+        tableName: String,
+        whereClause: String? = null
+    ): Boolean {
         val sqlSelect = "SELECT Count(1) FROM $tableName" + if (whereClause != null) " WHERE $whereClause" else ""
-        val count = this.queryForLong(sqlSelect, required = false)!!
+        val count = this.retrieveLong(sqlSelect, required = false)!!
         return (count > 0)
     }
     /***********************************************************************************************************************/
@@ -218,7 +256,10 @@ open class CrudHelper(context: Context): CustomSQLiteOpenHelper(context) {
     // ----------------------------------------------------------------------------------------------------------------------
 
     /***********************************************************************************************************************/
-    open fun insert(entity: Crudable, idAutoIncrement: Boolean = true): Int {
+    open fun insert(
+        entity: Crudable,
+        idAutoIncrement: Boolean = true
+    ): Int {
         if (idAutoIncrement && entity.id != null)
             throw Exception("CrudHelper.insert(): entity.id must be null (not ${entity.id}) since idAutoIncrement = true.")
         val cv = entity.extractContentValues()
@@ -228,27 +269,43 @@ open class CrudHelper(context: Context): CustomSQLiteOpenHelper(context) {
         return rowId.toInt()
     }
     /***********************************************************************************************************************/
-    open fun update(entity: Crudable, whereClause: String? = null): Int {
-        // If whereClause is not supplied, this fun updates by entity.id.
+    open fun update(
+        entity: Crudable,
+        whereClause: String? = null // if whereClause is not supplied, this fun updates by entity.id.
+    ): Int {
         val cv = entity.extractContentValues()
         val finalWhereClause = whereClause ?: "${entity.ID_COL_NAME}=${entity.id}"
-        return writableDatabase.update(entity.TABLE_NAME, cv, finalWhereClause, null)
+        return this.writableDatabase.update(entity.TABLE_NAME, cv, finalWhereClause, null)
     }
     /***********************************************************************************************************************/
-    open fun upsert(entity: Crudable): Int { // UPDATE if exists, INSERT if doesn't; use with autoincremented ID
+    // UPDATE if exists, INSERT if doesn't; use with autoincrement ID
+    open fun upsert(
+        entity: Crudable
+    ): Int {
         return if (entity.id != null) update(entity) else insert(entity)
     }
     /***********************************************************************************************************************/
-    open fun upsert(entity: Crudable, whereClause: String): Int { // UPDATE if exists, INSERT if doesn't; use with a custom PK
+    // UPDATE if exists, INSERT if doesn't; use with a custom PK
+    open fun upsert(
+        entity: Crudable,
+        whereClause: String
+    ): Int {
         val rowsUpdated = update(entity, whereClause)
         if (rowsUpdated > 0) return rowsUpdated
         return insert(entity)
     }
     /***********************************************************************************************************************/
-    open fun delete(entity: Crudable): Int {
-        // Deletes the entity by its id. If deleting condition is different (or there is no condition at all), then call directly:
-        // <your CrudHelper>.writableDatabase.delete(<table>, <whereClause>, <whereArgs>)
-        return this.writableDatabase.delete(entity.TABLE_NAME, "${entity.ID_COL_NAME}=${entity.id}", null)
+    // Deletes the entity by its id.
+    // If the deleting condition is different (or there is no condition at all, which deletes all rows), then call directly:
+    // <your CrudHelper>.writableDatabase.delete(<table>, <whereClause>, <whereArgs>)
+    open fun delete(
+        entity: Crudable
+    ): Int {
+        return this.writableDatabase.delete(
+            entity.TABLE_NAME,
+            "${entity.ID_COL_NAME}=${entity.id}",
+            null
+        )
     }
     /***********************************************************************************************************************/
 } // class CrudHelper

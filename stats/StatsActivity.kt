@@ -17,15 +17,15 @@ import ca.intfast.iftimer.util.InfoMsg
 import kotlin.math.roundToInt
 
 class StatsActivity: AppCompatActivity() {
-    private lateinit var b: ActivityStatsBinding // "b"inding
+    private lateinit var binding: ActivityStatsBinding
     private val cyc = CycleController(this)
     private val crudHelper = CrudHelper(this)
     /***********************************************************************************************************************/
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        b = ActivityStatsBinding.inflate(layoutInflater)
-        setContentView(b.root)
+        binding = ActivityStatsBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         setTitle(R.string.word__stats)
 
@@ -57,35 +57,35 @@ class StatsActivity: AppCompatActivity() {
 
         // PREVIOUS CYCLE:
         var s = retrieveStats("1") // average for one cycle means the cycle itself
-        b.prevMeal1.text = if (s.avgMeal1!! > 0) dur.stringFromMinutes(s.avgMeal1!!) else "---"
-        b.prevMeal2.text = if (s.avgMeal2!! > 0) dur.stringFromMinutes(s.avgMeal2!!) else "---"
-        b.prevEw.text = if (s.avgEw!! > 0) dur.stringFromMinutes(s.avgEw!!) else "---"
+        binding.prevMeal1.text = if (s.avgMeal1!! > 0) dur.stringFromMinutes(s.avgMeal1!!) else "---"
+        binding.prevMeal2.text = if (s.avgMeal2!! > 0) dur.stringFromMinutes(s.avgMeal2!!) else "---"
+        binding.prevEw.text = if (s.avgEw!! > 0) dur.stringFromMinutes(s.avgEw!!) else "---"
 
         // LAST 7 CYCLES:
         s = retrieveStats("7")
-        b.lastCyclesTitle7.text = getString(R.string.stats__last_n_cycles, "7")
-        b.avgMeal7.text = if (s.avgMeal!! > 0) dur.stringFromMinutes(s.avgMeal!!) else "---"
-        b.avgEw7.text = if (s.avgEw!! > 0) dur.stringFromMinutes(s.avgEw!!) else "---"
-        b.omadsNum7.text = if (s.omadsCount!! > 0) "${s.omadsCount} (${s.omadsPct}%)" else "---"
+        binding.lastCyclesTitle7.text = getString(R.string.stats__last_n_cycles, "7")
+        binding.avgMeal7.text = if (s.avgMeal!! > 0) dur.stringFromMinutes(s.avgMeal!!) else "---"
+        binding.avgEw7.text = if (s.avgEw!! > 0) dur.stringFromMinutes(s.avgEw!!) else "---"
+        binding.omadsNum7.text = if (s.omadsCount!! > 0) "${s.omadsCount} (${s.omadsPct}%)" else "---"
 
         // LAST 30 CYCLES:
         s = retrieveStats("30")
-        b.lastCyclesTitle30.text = getString(R.string.stats__last_n_cycles, "30")
-        b.avgMeal30.text = if (s.avgMeal!! > 0) dur.stringFromMinutes(s.avgMeal!!) else "---"
-        b.avgEw30.text = if (s.avgEw!! > 0) dur.stringFromMinutes(s.avgEw!!) else "---"
-        b.omadsNum30.text = if (s.omadsCount!! > 0) "${s.omadsCount} (${s.omadsPct}%)" else "---"
+        binding.lastCyclesTitle30.text = getString(R.string.stats__last_n_cycles, "30")
+        binding.avgMeal30.text = if (s.avgMeal!! > 0) dur.stringFromMinutes(s.avgMeal!!) else "---"
+        binding.avgEw30.text = if (s.avgEw!! > 0) dur.stringFromMinutes(s.avgEw!!) else "---"
+        binding.omadsNum30.text = if (s.omadsCount!! > 0) "${s.omadsCount} (${s.omadsPct}%)" else "---"
 
         // LAST 365 CYCLES:
         s = retrieveStats("365")
-        b.lastCyclesTitle365.text = getString(R.string.stats__last_n_cycles, "365")
-        b.avgMeal365.text = if (s.avgMeal!! > 0) dur.stringFromMinutes(s.avgMeal!!) else "---"
-        b.avgEw365.text = if (s.avgEw!! > 0) dur.stringFromMinutes(s.avgEw!!) else "---"
-        b.omadsNum365.text = if (s.omadsCount!! > 0) "${s.omadsCount} (${s.omadsPct}%)" else "---"
+        binding.lastCyclesTitle365.text = getString(R.string.stats__last_n_cycles, "365")
+        binding.avgMeal365.text = if (s.avgMeal!! > 0) dur.stringFromMinutes(s.avgMeal!!) else "---"
+        binding.avgEw365.text = if (s.avgEw!! > 0) dur.stringFromMinutes(s.avgEw!!) else "---"
+        binding.omadsNum365.text = if (s.omadsCount!! > 0) "${s.omadsCount} (${s.omadsPct}%)" else "---"
 
         // OMADs:
-        b.omadsNumTitle7.text = getString(R.string.stats__cycles, "7")
-        b.omadsNumTitle30.text = getString(R.string.stats__cycles, "30")
-        b.omadsNumTitle365.text = getString(R.string.stats__cycles, "365")
+        binding.omadsNumTitle7.text = getString(R.string.stats__cycles, "7")
+        binding.omadsNumTitle30.text = getString(R.string.stats__cycles, "30")
+        binding.omadsNumTitle365.text = getString(R.string.stats__cycles, "365")
     } // populate()
     /***********************************************************************************************************************/
     private fun retrieveStats(rowsLimit: String): Stats {
@@ -114,7 +114,7 @@ class StatsActivity: AppCompatActivity() {
                                                               "ORDER BY ${DbColumn.ID} DESC " +
                                                                         "LIMIT $rowsLimit)"
 
-        val stats = crudHelper.retrieveOne<Stats>(sqlSelect, required = true)!!
+        val stats = crudHelper.retrieveRecord<Stats>(sqlSelect, required = true)!!
 
         val avgMealTemp = (
                         (stats.avgMeal1!! * stats.meal1Count!! + stats.avgMeal2!! * stats.meal2Count!!).toDouble()

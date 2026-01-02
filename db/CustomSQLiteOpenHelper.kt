@@ -3,6 +3,7 @@ package ca.intfast.iftimer.db
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+//import ca.intfast.iftimer.util.Dbg.isDbgMode // https://github.com/Ursego/AndroidKotlin/blob/main/Dbg.kt
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // https://tinyurl.com/SQLiteCRUD
@@ -18,7 +19,10 @@ open class CustomSQLiteOpenHelper(context: Context): SQLiteOpenHelper(context, D
         // Extracted from onCreate() to allow the logic be executed many times from onOpen() in debug purpose.
         // In production, it will be called only once, from onCreate(), since onOpen() will be commented out.
 
-//        db.execSQL("DROP TABLE IF EXISTS " + DbTable.CYCLE) // todo: make sure it's commented out!!!
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // todo: make sure the next line is commented out after debugging!!! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        //if (isDbgMode()) db.execSQL("DROP TABLE IF EXISTS " + DbTable.CYCLE) // this allows us to call createDbObjects many times in debug purposes
 
         val sql = "CREATE TABLE " + DbTable.CYCLE + " (" +
                 DbColumn.ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
@@ -32,11 +36,11 @@ open class CustomSQLiteOpenHelper(context: Context): SQLiteOpenHelper(context, D
     }
     /***********************************************************************************************************************/
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // todo: make sure it's commented out!!! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // todo: make sure it's commented out after debugging!!! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //    override fun onOpen(db: SQLiteDatabase?) {
 //        super.onOpen(db)
-//        this.createDbObjects(db!!)
+//        if (isDbgMode()) this.createDbObjects(db!!)
 //    }
     /***********************************************************************************************************************/
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {

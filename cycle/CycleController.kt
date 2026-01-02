@@ -34,7 +34,7 @@ class CycleController(private val context: Context): CrudHelper(context) {
 //    } // getCurrAppStateStartLdt()
     /***********************************************************************************************************************/
     fun loadCurrCycleFromDb() {
-        val retrievedCurrCycle = retrieveOne<Cycle>(DbTable.CYCLE, whereClause = "fastingFinish IS NULL", required = false)
+        val retrievedCurrCycle = retrieveRecord<Cycle>(DbTable.CYCLE, whereClause = "fastingFinish IS NULL", required = false)
         currCycleExistsInDb = (retrievedCurrCycle != null)
         if (currCycleExistsInDb) currCycle = retrievedCurrCycle!! // If currCycleExistsInDb = false, currCycle will be populated in startMeal1()
         setAppStateByCurrCycle()
@@ -81,7 +81,7 @@ class CycleController(private val context: Context): CrudHelper(context) {
 
         whereClause.append(")")
 
-        return retrieveOne(DbTable.CYCLE, whereClause.toString(), required = false) // can be null if it's the first cycle after app install
+        return retrieveRecord(DbTable.CYCLE, whereClause.toString(), required = false) // can be null if it's the first cycle after app install
     } // retrievePrevCycle()
     /***********************************************************************************************************************/
     fun deleteStats() {

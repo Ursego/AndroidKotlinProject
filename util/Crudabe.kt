@@ -4,13 +4,13 @@ import android.content.ContentValues
 import android.database.Cursor
 import ca.intfast.iftimer.db.DbColumn
 
-// --------------------------------------------------------------------------------------------------------------------------
-// Must be implemented by all model classes, representing different entities of the application (like Emp, Dept etc.).
-// That will allow CrudHelper class to manipulate with those classes in its CRUD functions.
-// This interface forces you to write pure technical boilerplate code (population of ContentValues and reading from Cursor)
-// separately from the business logic, which makes that logic easier to write and, later, understand.
-// https://tinyurl.com/SQLiteCRUD
-// --------------------------------------------------------------------------------------------------------------------------
+/****************************************************************************************************************************
+Must be implemented by all model classes, representing application entities (like Emp, Dept etc.).
+That will allow CrudHelper class manipulate with those classes in its CRUD functions.
+This interface forces you to write pure technical boilerplate code (population of ContentValues and reading from Cursor)
+    separately from the business logic, which makes that logic easier to write and understand.
+https://tinyurl.com/SQLiteCRUD
+****************************************************************************************************************************/
 
 interface Crudable {
     /***********************************************************************************************************************/
