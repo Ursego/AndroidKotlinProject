@@ -8,7 +8,7 @@ import ca.intfast.iftimer.appwide.DurationController
 import ca.intfast.iftimer.appwide.PrefKey
 import ca.intfast.iftimer.appwide.beepAndVibrate
 import ca.intfast.iftimer.cycle.CycleController
-import ca.intfast.iftimer.util.AppPrefs
+import ca.intfast.iftimer.util.CustomAppCompatActivity
 import ca.intfast.iftimer.util.InfoMsg
 import java.time.Duration
 import java.time.LocalDateTime
@@ -16,11 +16,9 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
 class MainActivityMsgController (private val dur: DurationController, private val cyc: CycleController, private val context: Context) {
-    /***********************************************************************************************************************/
 
     // INFORMATION MESSAGES:
 
-    /***********************************************************************************************************************/
     fun msgEwDuration() {
         val ewDuration = dur.todayEwDuration()
 //        val showSeconds = AppPrefs.getBoolean(PrefKey.SHOW_SECONDS, context)
@@ -39,7 +37,7 @@ class MainActivityMsgController (private val dur: DurationController, private va
 
         InfoMsg.show(title = context.getString(titleR), msg = context.getString(msgR, ewDurationAsString), context = context)
     } // msgEwDuration()
-    /***********************************************************************************************************************/
+
     fun msgMealFinishedByForceSinceOneHourAchieved(abandoned: Boolean) {
         // Called from MainActivity.finishMealByForceIfOneHourAchieved().
 
@@ -72,7 +70,7 @@ class MainActivityMsgController (private val dur: DurationController, private va
 
         InfoMsg.show(title, msg, context)
     } // msgMealFinishedByForceSinceOneHourAchieved()
-    /***********************************************************************************************************************/
+
     fun msgDayMarkedAsOmad(appStateWhenAbandoned: String? = null) {
         // Called from MainActivity.makeCurrCycleOmad()
         val titleR = if (appStateWhenAbandoned == null /* day was marked as OMAD by user from menu */)
@@ -88,17 +86,15 @@ class MainActivityMsgController (private val dur: DurationController, private va
 
         InfoMsg.show(title = context.getString(titleR), msg = context.getString(msgR), context = context)
     } // msgDayMarkedAsOmad()
-    /***********************************************************************************************************************/
+
     fun msgCopyright() { // "Meal length must be at least %1$s minutes."
         InfoMsg.show(title = context.getString(R.string.msg__copyright__title),
             msg = context.getString(R.string.msg__copyright),
             context = context)
     } // msgCopyright()
-    /***********************************************************************************************************************/
 
     // BOTTOM MESSAGE:
 
-    /***********************************************************************************************************************/
     fun generateBottomMsg(oldBottomMsg: String, maxHoursInWindowsProgressBar: Int, timersColor: Int): String {
         if (AppState.meal1 || AppState.meal2) {
             if (timersColor == MainActivity.GREEN) return ""
@@ -123,7 +119,7 @@ class MainActivityMsgController (private val dur: DurationController, private va
 
         return "" // display nothing in bottom message
     } // generateBottomMsg()
-    /***********************************************************************************************************************/
+
     private fun generateBottomMsgBetweenMealsGreen(maxHoursInWindowsProgressBar: Int): String {
         // "You have %1$s\nto start meal 2 (%2$s at the latest).\nEating window ends at %3$s"
         val formatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
@@ -142,7 +138,7 @@ class MainActivityMsgController (private val dur: DurationController, private va
         val ewEndAsLt = ewEndAsLdt.toLocalTime()
         val ewEndAsString = ewEndAsLt.format(formatter)
 
-        val maxMealMinutes = AppPrefs.getInt(PrefKey.MAXIMUM_MEAL_MINUTES, context)
+        val maxMealMinutes = CustomAppCompatActivity.getInt(PrefKey.MAXIMUM_MEAL_MINUTES, context)
         val nextMealAsLdt = ewEndAsLdt.plusMinutes((maxMealMinutes * -1).toLong())
         val nextMealAsLt = nextMealAsLdt.toLocalTime()
         val nextMealAsString = nextMealAsLt.format(formatter)
@@ -154,7 +150,7 @@ class MainActivityMsgController (private val dur: DurationController, private va
         val msg = context.getString(R.string.bottom_msg__bm_green, youHaveDurationAsString, nextMealAsString, ewEndAsString)
         return msg.replace(oldValue = "..", newValue = ".") // "p.m.." > "p.m."
     } // generateBottomMsgBetweenMealsGreen()
-    /***********************************************************************************************************************/
+
     @SuppressLint("StringFormatInvalid")
     private fun generateBottomMsgRed(maxHoursInWindowsProgressBar: Int): String {
         val hoursBeforeNextMeal: Int
@@ -162,7 +158,7 @@ class MainActivityMsgController (private val dur: DurationController, private va
 
         when (true) {
             AppState.betweenMeals -> {
-                hoursBeforeNextMeal = AppPrefs.getInt(PrefKey.MINIMUM_BETWEEN_MEALS_HOURS, context)
+                hoursBeforeNextMeal = CustomAppCompatActivity.getInt(PrefKey.MINIMUM_BETWEEN_MEALS_HOURS, context)
                 stageStartLdt = cyc.betweenMealsStart
             }
             AppState.fasting -> {
@@ -184,7 +180,7 @@ class MainActivityMsgController (private val dur: DurationController, private va
         // instead, display "Wait X hours" immediately:
         val hours = when (true) {
             AppState.fasting -> 16
-            AppState.betweenMeals -> AppPrefs.getInt(PrefKey.MINIMUM_BETWEEN_MEALS_HOURS, context) // 2, 3 or 4
+            AppState.betweenMeals -> CustomAppCompatActivity.getInt(PrefKey.MINIMUM_BETWEEN_MEALS_HOURS, context) // 2, 3 or 4
             else -> null // that will never happen
         }
         if (waitDuration.toMinutes().toInt() == hours!! * 60 + 1)
@@ -197,7 +193,7 @@ class MainActivityMsgController (private val dur: DurationController, private va
                 val ewEndAsLdt = cyc.ewStart.plusHours(maxHoursInWindowsProgressBar.toLong())!!
                 val ewEndAsLt = ewEndAsLdt.toLocalTime()
                 val ewEndAsString = ewEndAsLt.format(formatter)
-                val maxMealMinutes = AppPrefs.getInt(PrefKey.MAXIMUM_MEAL_MINUTES, context)
+                val maxMealMinutes = CustomAppCompatActivity.getInt(PrefKey.MAXIMUM_MEAL_MINUTES, context)
                 val nextMealLatestAsLdt = ewEndAsLdt.plusMinutes((maxMealMinutes * -1).toLong())
                 val nextMealLatestAsString = nextMealLatestAsLdt.format(formatter)
 
@@ -230,34 +226,31 @@ class MainActivityMsgController (private val dur: DurationController, private va
 
         return msg.replace(oldValue = "..", newValue = ".") // "p.m.." > "p.m."
     } // generateBottomMsgRed()
-    /***********************************************************************************************************************/
+
 
 //    // ERROR MESSAGES (DISPLAYED WHEN BUTTON CLICK DECLINED):
 //
-//    /***********************************************************************************************************************/
 //    fun errMsgMealTooShort(minimumMealMinutes: Int) { // "Meal length must be at least %1$s minutes."
 //        InfoMsg.show(title = context.getString(R.string.msg__too_short_meal__title),
 //            msg = context.getString(R.string.msg__too_short_meal__error, minimumMealMinutes.toString()),
 //            context = context)
 //    } // errMsgMealTooShort()
-//    /***********************************************************************************************************************/
+//
 //    fun errMsgBetweenMealsTooShort(minimumHours: Int) {
 //        // "The gap between the meals must be at least %1$s hours to allow the previous food be properly digested."
 //        InfoMsg.show(title = context.getString(R.string.msg__too_short_between_meals__title),
 //            msg = context.getString(R.string.msg__too_short_between_meals, minimumHours.toString()),
 //            context = context)
 //    } // errMsgBetweenMealsTooShort()
-//    /***********************************************************************************************************************/
+//
 //    fun errMsgFastingTooShort(minimumFastingHours: Int) { // "The fasting must be at least %1$s hours (in ideal - at last 16 hours)."
 //        InfoMsg.show(title = context.getString(R.string.msg__too_short_fast__title),
 //            msg = context.getString(R.string.msg__too_short_fast__error, minimumFastingHours.toString()),
 //            context = context)
 //    } // errMsgFastingTooShort()
-//    /***********************************************************************************************************************/
 
-//    /***********************************************************************************************************************/
 //    // REMINDERS - MESSAGES THAT POPUP EVEN WHEN THE APP IS IDLING:
-//    /***********************************************************************************************************************/
+//
 //    fun setReminderEwWillEndInOneHour() { // called from MainActivity.startMeal1()
 //        cancelReminderEwWillEndInOneHour() // maybe, the reminder was set by meal 1, which was cancelled after that
 //        if (!AppPrefs.getBoolean(PrefKey.REMIND_1_HOUR_BEFORE_EW_END, context)) return
@@ -279,14 +272,14 @@ class MainActivityMsgController (private val dur: DurationController, private va
 //            context.getString(R.string.alert__ew_will_end_in_1_h___8_h_ew),
 //            ReminderRequestCode.ONE_HOUR_BEFORE_EW_END, context)
 //    }
-//    /***********************************************************************************************************************/
+//
 //    fun cancelReminderEwWillEndInOneHour() {
 //        // Called from MainActivity: startMeal2(), makeCurrCycleOmad() & onResumeCheckInactivity()
 ////        if (!AppPrefs.getBoolean(PrefKey.REMIND_1_HOUR_BEFORE_EW_END, context)) return
 //
 //        reminderController.cancelReminder(ReminderRequestCode.ONE_HOUR_BEFORE_EW_END, context)
 //    }
-//    /***********************************************************************************************************************/
+//
 //    fun setReminderYouCanGoToSleep(windowsChronometerText: String) {
 //        // if (remindGoToSleep && <minBeforeSleepHours> hours after fasting start have passed), display alarm:
 //        // "You can go to sleep!"
@@ -307,5 +300,4 @@ class MainActivityMsgController (private val dur: DurationController, private va
 //            context = context
 //        )
 //    }
-    /***********************************************************************************************************************/
 }

@@ -71,7 +71,7 @@ fun Chronometer.start(instanceName: String? = null /* omit if only one Chronomet
 
     // Remember the curr. moment, so resume(), called from the Activity onResume(), will make the Chronometer counting from it:
     val startLdtPrefKey = this.generateStartLdtPrefKey(instanceName ?: "")
-    AppPrefs.put(startLdtPrefKey, LocalDateTime.now()!!, context)
+    CustomAppCompatActivity.put(startLdtPrefKey, LocalDateTime.now()!!, context)
 
     this.base = SystemClock.elapsedRealtime() // milliseconds since boot, including time spent in sleep
     this.start()
@@ -89,7 +89,7 @@ fun Chronometer.start(instanceName: String? = null /* omit if only one Chronomet
 
     // Remember that moment, so resume(), called from the Activity onResume(), will make the Chronometer counting from it:
     val startLdtPrefKey = generateStartLdtPrefKey(instanceName)
-    AppPrefs.put(startLdtPrefKey, startLdt, context)
+    CustomAppCompatActivity.put(startLdtPrefKey, startLdt, context)
 
     val now = LocalDateTime.now()!!
     var deltaInMilli = Duration.between(startLdt, now)!!.toMillis()
@@ -125,7 +125,7 @@ fun Chronometer.finish() {
 fun Chronometer.resume(instanceName: String? = null /* omit if only one Chronometer in app */, context: Context) {
     // Must be called from onResume() of the Chronometer's parent Activity
     val startLdtPrefKey = generateStartLdtPrefKey(instanceName)
-    val startLdt = AppPrefs.getLocalDateTime(startLdtPrefKey, context)
+    val startLdt = CustomAppCompatActivity.getLocalDateTime(startLdtPrefKey, context)
         ?:
         return // it's null because start(context: Context) has never been called
 

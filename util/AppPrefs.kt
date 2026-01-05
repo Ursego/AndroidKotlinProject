@@ -51,7 +51,7 @@ import java.time.LocalTime
  *
  * @see [SharedPreferences Documentation](https://developer.android.com/reference/android/content/SharedPreferences)
  */
-object AppPrefs {
+object CustomAppCompatActivity {
     fun getString(key: String, context: Context): String {
         val appSharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)!!
         return appSharedPreferences.getString(key, "")!!

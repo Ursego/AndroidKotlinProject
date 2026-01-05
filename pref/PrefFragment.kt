@@ -8,7 +8,7 @@ import androidx.preference.Preference
 import androidx.preference.SwitchPreferenceCompat
 import ca.intfast.iftimer.R
 import ca.intfast.iftimer.appwide.PrefKey
-import ca.intfast.iftimer.util.AppPrefs
+import ca.intfast.iftimer.util.CustomAppCompatActivity
 import ca.intfast.iftimer.util.InfoMsg
 import ca.intfast.iftimer.util.PreferenceFragmentAutomaticSummary
 
@@ -142,20 +142,10 @@ class PrefFragment: PreferenceFragmentAutomaticSummary(), SharedPreferences.OnSh
         preferenceScreen = screen
     }
 
-    /**
-     * Validates that the "Eating Window" settings are mathematically consistent.
-     *
-     * This function checks if two meals of the specified duration, separated by the specified
-     * gap, can actually fit within the total eating window duration.
-     *
-     * Formula: `(2 * MaxMealMinutes) + (MinGapHours * 60) <= (MaxEwHours * 60)`
-     *
-     * @param preference The preference object being changed.
-     * @param newValue The proposed new value for the preference.
-     * @param cont The application context.
-     * @return `true` if the new configuration is valid; `false` otherwise (showing an error dialog to the user).
-     * @throws Exception If called for a preference key other than meal minutes, gap hours, or EW hours.
-     */
+    // ewOk() validates that the Eating Window settings are mathematically consistent.
+    // This function checks if two meals of the specified duration, separated by the specified
+    // gap, can actually fit within the total eating window duration.
+    // Formula: (duration of 2 meals) + (gap between them) <= (maximum allowed eating window duration)
     private fun ewOk(preference: Preference, newValue: Any, cont: Context): Boolean {
         val maxMealMinutes: Int
         val minBetweenMealsHours: Int
@@ -163,22 +153,23 @@ class PrefFragment: PreferenceFragmentAutomaticSummary(), SharedPreferences.OnSh
         when (preference.key) {
             PrefKey.MAXIMUM_MEAL_MINUTES -> {
                 maxMealMinutes = (newValue as String).toInt()
-                minBetweenMealsHours = AppPrefs.getInt(PrefKey.MINIMUM_BETWEEN_MEALS_HOURS, cont)
-                maxEwHours = AppPrefs.getInt(PrefKey.MAXIMUM_EW_HOURS, cont)
+                minBetweenMealsHours = CustomAppCompatActivity.getInt(PrefKey.MINIMUM_BETWEEN_MEALS_HOURS, cont)
+                maxEwHours = CustomAppCompatActivity.getInt(PrefKey.MAXIMUM_EW_HOURS, cont)
             }
             PrefKey.MINIMUM_BETWEEN_MEALS_HOURS -> {
-                maxMealMinutes = AppPrefs.getInt(PrefKey.MAXIMUM_MEAL_MINUTES, cont)
+                maxMealMinutes = CustomAppCompatActivity.getInt(PrefKey.MAXIMUM_MEAL_MINUTES, cont)
                 minBetweenMealsHours = (newValue as String).toInt()
-                maxEwHours = AppPrefs.getInt(PrefKey.MAXIMUM_EW_HOURS, cont)
+                maxEwHours = CustomAppCompatActivity.getInt(PrefKey.MAXIMUM_EW_HOURS, cont)
             }
             PrefKey.MAXIMUM_EW_HOURS -> {
-                maxMealMinutes = AppPrefs.getInt(PrefKey.MAXIMUM_MEAL_MINUTES, cont)
-                minBetweenMealsHours = AppPrefs.getInt(PrefKey.MINIMUM_BETWEEN_MEALS_HOURS, cont)
+                maxMealMinutes = CustomAppCompatActivity.getInt(PrefKey.MAXIMUM_MEAL_MINUTES, cont)
+                minBetweenMealsHours = CustomAppCompatActivity.getInt(PrefKey.MINIMUM_BETWEEN_MEALS_HOURS, cont)
                 maxEwHours = (newValue as String).toInt()
             }
             else -> throw Exception("PrefFragment.ewOk() shuld bot be called for pref ${preference.key}")
         }
 
+        // Multiply hours by 60 to bring all the math to minutes:
         if ((maxMealMinutes * 2) + (minBetweenMealsHours * 60) <= maxEwHours * 60) return true // accept the new value
 
         InfoMsg.show (

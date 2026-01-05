@@ -6,23 +6,31 @@ import ca.intfast.iftimer.db.DbColumn
 
 /****************************************************************************************************************************
 Must be implemented by all model classes, representing application entities (like Emp, Dept etc.).
-That will allow CrudHelper class manipulate with those classes in its CRUD functions.
+That will allow CrudHelper class manipulate those classes in its CRUD functions.
 This interface forces you to write pure technical boilerplate code (population of ContentValues and reading from Cursor)
     separately from the business logic, which makes that logic easier to write and understand.
 https://tinyurl.com/SQLiteCRUD
 ****************************************************************************************************************************/
 
 interface Crudable {
-    /***********************************************************************************************************************/
-    val TABLE_NAME: String
-    /***********************************************************************************************************************/
-    val ID_COL_NAME: String
-        get() = DbColumn.ID // override if the ID column name is not "_id"
-    /***********************************************************************************************************************/
+    val tableName: String
+    // When you pass the entity object which implements Crudable to a DML function of CrudHelper, tableName is:
+    // * Passed to DML functions of writableDatabase, like:
+    //      val rowId = this.writableDatabase.insert(entity.tableName, null, cv)
+    // * Used to build the DML statement dynamically, like:
+    //      "SELECT * FROM $tableName WHERE $whereClause"
+
+    val idColName: String
+        get() = DbColumn.ID // override if the ID column name is not the default "_id"
+
     var id: Int?
     // Override this way:
     // override var id: Int? = null
-    /***********************************************************************************************************************/
+
+    // The previous two constants are used to build the WHERE clause, like:
+    // "${entity.idColName}=${entity.id}"
+    // "SELECT * FROM $tableName WHERE $idColName=$id"
+
     fun extractContentValues(): ContentValues
     // Called from insert() and update() of CrudHelper.
 
@@ -36,7 +44,7 @@ interface Crudable {
     //        cv.put(DbColumn.IS_ACTIVE, this.isActive)
     //        return cv
     //    }
-    /***********************************************************************************************************************/
+
     fun populateFromCursor(cursor: Cursor)
     // Called from retrieveListBySql() of CrudHelper.
 
@@ -48,5 +56,4 @@ interface Crudable {
     //        this.dob = cursor.getLocalDate(DbColumn.DOB)
     //        this.isActive = cursor.getBoolean(DbColumn.IS_ACTIVE)
     //    }
-    /***********************************************************************************************************************/
 } // interface Crudable

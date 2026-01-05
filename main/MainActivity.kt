@@ -3,7 +3,6 @@ package ca.intfast.iftimer.main
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Color
-import android.net.Uri
 import android.os.Bundle
 import android.os.SystemClock
 import android.view.Menu
@@ -30,6 +29,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.concurrent.TimeUnit
+import androidx.core.net.toUri
 
 class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
     private lateinit var binding: ActivityMainBinding
@@ -39,8 +39,8 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
     private val currCycle get() = cyc.getCurrCycle()
     private val dateTimeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
     private var mealFinishedByForceDueToInactivity
-        get() = AppPrefs.getBoolean("mealFinishedByForceDueToInactivity", this)
-        set(value) = AppPrefs.put("mealFinishedByForceDueToInactivity", value, this)
+        get() = CustomAppCompatActivity.getBoolean("mealFinishedByForceDueToInactivity", this)
+        set(value) = CustomAppCompatActivity.put("mealFinishedByForceDueToInactivity", value, this)
 
     companion object {
         const val RED = Color.RED
@@ -48,8 +48,10 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
         const val EIGHT_HOURS_AS_MINUTES = 480
         const val SIXTEEN_HOURS_AS_MINUTES = 960
         const val TWENTY_FOUR_HOURS_AS_MINUTES = 1440
+        private const val MIN_FASTING_HOURS = 16
+        private const val MIN_MEAL_MINUTES = 10
     }
-    /***********************************************************************************************************************/
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -61,7 +63,7 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
         msg = MainActivityMsgController(dur, cyc, this)
 
         binding.mealChronometerButton.setOnClickListener {
-            val useLongClick = AppPrefs.getBoolean(PrefKey.USE_LONG_CLICK, this)
+            val useLongClick = CustomAppCompatActivity.getBoolean(PrefKey.USE_LONG_CLICK, this)
             if (useLongClick)
                 toast(this, getString(R.string.toast__keep_button_for_half_second))
             else
@@ -69,7 +71,7 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
         }
 
         binding.mealChronometerButton.setOnLongClickListener {
-            val useLongClick = AppPrefs.getBoolean(PrefKey.USE_LONG_CLICK, this)
+            val useLongClick = CustomAppCompatActivity.getBoolean(PrefKey.USE_LONG_CLICK, this)
             if (useLongClick) buttonClicked()
             true
             // Returning true tells the framework that the touch event is consumed and no further event handling
@@ -80,18 +82,18 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
         binding.mealChr.onChronometerTickListener = this
         binding.windowsChr.onChronometerTickListener = this
     } // onCreate()
-    /***********************************************************************************************************************/
+
     override fun onStart() {
         super.onStart()
 
-        if (!AppPrefs.getBoolean("PREF_ACTIVITY_SHOWN_ON_START", this)) {
+        if (!CustomAppCompatActivity.getBoolean("PREF_ACTIVITY_SHOWN_ON_START", this)) {
             startActivity(Intent(this, PrefActivity::class.java))
-            AppPrefs.put("PREF_ACTIVITY_SHOWN_ON_START", true, this)
+            CustomAppCompatActivity.put("PREF_ACTIVITY_SHOWN_ON_START", true, this)
         }
     } // onStart()
-    /***********************************************************************************************************************/
+
     private fun buttonClicked() {
-        if (AppPrefs.getBoolean(PrefKey.VIBRATE_ON_BUTTON_CLICK, this)) vibrate(this,100)
+        if (CustomAppCompatActivity.getBoolean(PrefKey.VIBRATE_ON_BUTTON_CLICK, this)) vibrate(this,100)
 
         if (AppState.betweenMeals && !dur.enoughTimeToFinishMeal2Inside8HoursEw()) {
             InfoMsg.modalDialog(
@@ -103,11 +105,11 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
             return
         }
 
-        val minimumBetweenMealsHours = AppPrefs.getInt(PrefKey.MINIMUM_BETWEEN_MEALS_HOURS, this)
+        val minimumBetweenMealsHours = CustomAppCompatActivity.getInt(PrefKey.MINIMUM_BETWEEN_MEALS_HOURS, this)
 
         val tooEarly = when (true) {
-            AppState.fasting               -> dur.fastingTooShort(minimumFastingHours = 16)
-            AppState.meal1, AppState.meal2 -> dur.mealTooShort(minimumMealMinutes = 10)
+            AppState.fasting               -> dur.fastingTooShort(minimumFastingHours = MIN_FASTING_HOURS)
+            AppState.meal1, AppState.meal2 -> dur.mealTooShort(minimumMealMinutes = MIN_MEAL_MINUTES)
             AppState.betweenMeals          -> dur.betweenMealsTooShort(minimumBetweenMealsHours = minimumBetweenMealsHours)
             else                           -> throw Exception("None of AppState properties is true.")
         }
@@ -165,7 +167,7 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
             context = this
         )
     } // buttonClicked()
-    /***********************************************************************************************************************/
+
     override fun onChronometerTick(chronometer: Chronometer?) {
         setChrTextByItsBase(chronometer) // like "0:18" or "0:18:59"
 
@@ -192,7 +194,7 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
             else -> {}
         }
     } // onChronometerTick()
-    /***********************************************************************************************************************/
+
     override fun onResume() {
         super.onResume()
 
@@ -210,7 +212,7 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
 
         setGui()
     } // onResume()
-    /***********************************************************************************************************************/
+
     private fun start(chr: Chronometer, startLdt: LocalDateTime? = null /* null = "start from now" */) {
         val instanceName = when (chr.id) {
             binding.mealChr.id -> "mealChronometer"
@@ -223,7 +225,7 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
         // for a short moment - until setChronometerTextByItsBase() is called on next onChronometerTick():
         setChrTextByItsBase(chr)
     } // start()
-    /***********************************************************************************************************************/
+
     private fun resume(chronometer: Chronometer) {
         val instanceName = when (chronometer.id) {
             binding.mealChr.id -> "mealChronometer"
@@ -237,13 +239,11 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
         // That's why this func exists - otherwise we would call Chronometer.resume(...) directly:
         setChrTextByItsBase(chronometer)
     } // resume()
-    /***********************************************************************************************************************/
 
     // ----------------------------------------------------------------------------------------------------------------------
     // FUNCTIONS RELATED TO INACTIVITY AND MAKING THE CURR CYCLE OMAD:
     // ----------------------------------------------------------------------------------------------------------------------
 
-    /***********************************************************************************************************************/
     private fun onResumeCheckInactivity() {
         // Inactivity happens when user didn't click the "START / FINISH MEAL 1 / 2" button for too long time,
         // and the app was on pause at the moment when the AppState came to its max time, so the app was not able
@@ -264,7 +264,7 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
         var appStateWhenAbandoned: String? = null // which AppState was started, but not finished; null = not abandoned
 
         // Define whether or not the timer has been abandoned by user (i.e. user stopped using the app):
-        when (AppPrefs.getString(PrefKey.LAST_APP_STATE_SET_BY_USER, this)) {
+        when (CustomAppCompatActivity.getString(PrefKey.LAST_APP_STATE_SET_BY_USER, this)) {
             AppState.MEAL_1        -> if (dur.getMealMinutesUpToNow() >= 60)                     appStateWhenAbandoned = AppState.MEAL_1
             AppState.BETWEEN_MEALS -> if (dur.getEwMinutesUpToNow()   >= EIGHT_HOURS_AS_MINUTES) appStateWhenAbandoned = AppState.BETWEEN_MEALS
             AppState.MEAL_2        -> if (dur.getMealMinutesUpToNow() >= 60)                     appStateWhenAbandoned = AppState.MEAL_2
@@ -287,7 +287,7 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
                                       // will be called from onChronometerTick().
         }
     } // onResumeCheckInactivity()
-    /***********************************************************************************************************************/
+
     private fun finishMealByForceIfOneHourAchieved(abandoned: Boolean) {
         // abandoned:
         //      true - called from onResumeCheckInactivity() if a meal was abandoned
@@ -336,7 +336,7 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
 
         msg.msgMealFinishedByForceSinceOneHourAchieved(abandoned = true)
     } // finishMealByForceIfOneHourAchieved()
-    /***********************************************************************************************************************/
+
     private fun makeCurrCycleOmad(appStateWhenAbandoned: String? = null) {
         // appStateWhenAbandoned:
         //      not null - automatically called from onChronometerTick() or onResumeCheckInactivity();
@@ -366,13 +366,11 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
         msg.msgDayMarkedAsOmad(appStateWhenAbandoned)
 //        mainActivityMsgController.cancelReminderEwWillEndInOneHour()
     } // makeCurrCycleOmad()
-//    /***********************************************************************************************************************/
 
     // ----------------------------------------------------------------------------------------------------------------------
     // FUNCTIONS CALLED WHEN USER CLICKS "START / FINISH MEAL" BUTTON:
     // ----------------------------------------------------------------------------------------------------------------------
 
-    /***********************************************************************************************************************/
     private fun startMeal1() {
         cyc.startMeal1()
         start(binding.mealChr) // start MEAL 1 timer
@@ -384,7 +382,7 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
         setGuiBottomMsg()
 //        mainActivityMsgController.setReminderEwWillEndInOneHour()
     } // startMeal1()
-    /***********************************************************************************************************************/
+
     private fun startBetweenMeals(startLdt: LocalDateTime? = null /* null means "start from now" */) {
         cyc.startBetweenMeals(startLdt)
         start(binding.mealChr, startLdt) // start AFTER MEAL 1 timer
@@ -393,7 +391,7 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
         setGuiWindowsChr()
         setGuiBottomMsg()
     } // startBetweenMeals()
-    /***********************************************************************************************************************/
+
     private fun startMeal2() {
         cyc.startMeal2()
         start(binding.mealChr) // start MEAL 2 timer
@@ -403,7 +401,7 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
         setGuiBottomMsg()
 //        mainActivityMsgController.cancelReminderEwWillEndInOneHour()
     } // startMeal2()
-    /***********************************************************************************************************************/
+
     private fun startFasting(startLdt: LocalDateTime? = null /* null means "start from now" */, displayMsgEwDuration: Boolean) {
         cyc.startFasting(startLdt)
         binding.mealChr.finish() // stop MEAL 2 timer
@@ -414,13 +412,11 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
         setGuiBottomMsg()
 //        mainActivityMsgController.setReminderYouCanGoToSleep()
     } // startFasting(displayMsgEwDuration)
-    /***********************************************************************************************************************/
 
     // ----------------------------------------------------------------------------------------------------------------------
     // FUNCTIONS RELATED TO APP STATE CANCELLATION:
     // ----------------------------------------------------------------------------------------------------------------------
 
-    /***********************************************************************************************************************/
     private fun appStateCanBeCancelled(): Boolean {
         return when (true) {
             AppState.meal1, AppState.meal2 -> true // lo limitation - a meal can be cancelled at any moment
@@ -439,7 +435,7 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
             else -> throw Exception("None of AppState properties is true.")
         }
     } // appStateCanBeCancelled()
-    /***********************************************************************************************************************/
+
     private fun cancelCurrAppState() {
         if (!appStateCanBeCancelled()) {
             // The menu was open when the action was allowed, but the action became prohibited while the menu was kept open:
@@ -466,13 +462,11 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
 
         setGui()
     } // cancelCurrAppState()
-    /***********************************************************************************************************************/
 
     // ----------------------------------------------------------------------------------------------------------------------
-    // FUNCTIONS WHICH SETUP VISUAL APPEARANCE:
+    // FUNCTIONS TO SETUP VISUAL APPEARANCE:
     // ----------------------------------------------------------------------------------------------------------------------
 
-    /***********************************************************************************************************************/
     @SuppressLint("SetTextI18n")
     private fun setChrTextByItsBase(chr: Chronometer?) {
         // Sets displayed time according to SHOW_SECONDS pref, like "0:18" (if false) or "0:18:59" (if true).
@@ -497,23 +491,23 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
 //
 //        chr.text = text
     } // setChronometerTextByItsBase()
-    /***********************************************************************************************************************/
+
     private fun defineChrColor(): Int {
         return when (true) {
             AppState.meal1, AppState.meal2 -> if (dur.mealTooLong())               RED else GREEN
 
             AppState.betweenMeals -> if (
-                    dur.betweenMealsTooShort(minimumBetweenMealsHours = AppPrefs.getInt(PrefKey.MINIMUM_BETWEEN_MEALS_HOURS, this))
+                    dur.betweenMealsTooShort(minimumBetweenMealsHours = CustomAppCompatActivity.getInt(PrefKey.MINIMUM_BETWEEN_MEALS_HOURS, this))
                     ||
                     !dur.enoughTimeToFinishMeal2Inside8HoursEw()
                                         )                                          RED else GREEN
 
-            AppState.fasting -> if (dur.fastingTooShort(minimumFastingHours = 16)) RED else GREEN
+            AppState.fasting -> if (dur.fastingTooShort(minimumFastingHours = MIN_FASTING_HOURS)) RED else GREEN
 
             else -> throw Exception("None of AppState properties is 'true'.")
         }
     } // defineChronometersColor()
-    /***********************************************************************************************************************/
+
     private fun setGuiMealChr() {
         binding.mealChr.visibility = if (AppState.fasting) View.INVISIBLE else View.VISIBLE
         binding.mealChrLabel.visibility = binding.mealChr.visibility
@@ -553,7 +547,7 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
         binding.mealChr.setTextColor(color)
         binding.mealChronometerButton.text = getString(buttonR)
     } // setGuiMealChronometer()
-    /***********************************************************************************************************************/
+
     private fun setGuiMealChrBeginEndLabels() {
         binding.mealChrBeginLabel.visibility = binding.mealChr.visibility
         binding.mealChrEndLabel.visibility = binding.mealProgressBar.visibility
@@ -572,7 +566,7 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
         val stageEndLdt = stageBeginLdt.plusSeconds(binding.mealProgressBar.max.toLong()) // mealProgressBar.max contains seconds
         binding.mealChrEndLabel.text = " " + stageEndLdt.toLocalTime().format(dateTimeFormatter) + " "
     } // setGuiMealChronometerStartEndLabels()
-    /***********************************************************************************************************************/
+
     @SuppressLint("SetTextI18n")
     private fun setGuiMealChrProgressBar() {
         binding.mealProgressBar.visibility = if (AppState.fasting) View.INVISIBLE else View.VISIBLE
@@ -586,13 +580,13 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
 
         when (true) {
             AppState.meal1, AppState.meal2 -> {
-                val maxMealMinutes = AppPrefs.getInt(PrefKey.MAXIMUM_MEAL_MINUTES, this)
+                val maxMealMinutes = CustomAppCompatActivity.getInt(PrefKey.MAXIMUM_MEAL_MINUTES, this)
                 maxSeconds = maxMealMinutes * 60
                 progressSeconds = dur.getMealSecondsUpToNow()
                 binding.mealDurationLabel.text = maxMealMinutes.toString() + " " + resources.getQuantityString(R.plurals.word__minute, maxMealMinutes)
             }
             AppState.betweenMeals -> {
-                val minBetweenMealsHours = AppPrefs.getInt(PrefKey.MINIMUM_BETWEEN_MEALS_HOURS, this)
+                val minBetweenMealsHours = CustomAppCompatActivity.getInt(PrefKey.MINIMUM_BETWEEN_MEALS_HOURS, this)
                 maxSeconds = minBetweenMealsHours * 60 * 60
                 progressSeconds = dur.getBetweenMealsSecondsUpToNow()
                 binding.mealDurationLabel.text = minBetweenMealsHours.toString() + " " + resources.getQuantityString(R.plurals.word__hour, minBetweenMealsHours)
@@ -621,7 +615,7 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
         binding.mealPctLabel.text = pct.toInt().toString() + "%"
         setGuiWaitTimeLabel(binding.mealWaitTimeLabel, progressSeconds, maxSeconds)
     } // setGuiMealProgressBar()
-    /***********************************************************************************************************************/
+
     private fun setGuiWindowsChr() {
         binding.windowsChr.visibility =
             if (AppState.meal1 || (AppState.fasting && !cyc.atLeastOneCycleExistsInDb()))
@@ -643,7 +637,6 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
         // When fasting achieves 24 hours, windowsChronometer is reset to zeros and starts to count from "00"00".
         // In that situation, let's display "1 day +", "2 days +" etc. in windowsChronometerDays:
         if (AppState.fasting) {
-
             // Prevent crash when user cancels the first MEAL 1 after app install -
             // getFastingDurationUpToNow() will access curr cycle which doesn't exist yet:
             if (!cyc.atLeastOneCycleExistsInDb()) {
@@ -660,7 +653,7 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
             }
         }
     } // setGuiWindowsChronometer()
-    /***********************************************************************************************************************/
+
     private fun setGuiWindowsChrBeginEndLabels() {
         binding.windowsChrBeginLabel.visibility = binding.windowsChr.visibility
         if (binding.windowsChrDays.text != "") binding.windowsChrBeginLabel.visibility = View.INVISIBLE // hide if fasting longer than 1 day
@@ -675,7 +668,7 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
         val stageEndLdt = stageBeginLdt.plusMinutes(binding.windowsProgressBar.max.toLong()) // windowsProgressBar.max contains minutes
         binding.windowsChrEndLabel.text = " " + stageEndLdt.toLocalTime().format(dateTimeFormatter) + " "
     } // setGuiWindowsChronometerStartEndLabels()
-    /***********************************************************************************************************************/
+
     @SuppressLint("SetTextI18n")
     private fun setGuiWindowsChrProgressBar() {
         var maxMinutes = 0 // to populate windowsProgressBar.max
@@ -689,7 +682,8 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
                     AppState.meal2 // there is nothing to plan today since user has already started MEAL 2
                     ||
                     (AppState.fasting && !cyc.atLeastOneCycleExistsInDb())
-                ) View.INVISIBLE
+                )
+                View.INVISIBLE
             else
                 View.VISIBLE
 
@@ -708,13 +702,13 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
 
             AppState.betweenMeals, AppState.meal2 -> {
                 // Display EATING window progress:
-                val maxEwHours = AppPrefs.getInt(PrefKey.MAXIMUM_EW_HOURS, this)
+                val maxEwHours = CustomAppCompatActivity.getInt(PrefKey.MAXIMUM_EW_HOURS, this)
                 var finalMaxEwHours = maxEwHours.toString()
                 maxMinutes = maxEwHours * 60
                 progressMinutes = dur.getEwMinutesUpToNow()
 
                 if (AppState.betweenMeals) {
-                    val maxMealMinutes = AppPrefs.getInt(PrefKey.MAXIMUM_MEAL_MINUTES, this)
+                    val maxMealMinutes = CustomAppCompatActivity.getInt(PrefKey.MAXIMUM_MEAL_MINUTES, this)
                     extendTo8 = (maxEwHours < 8 && progressMinutes >= (maxMinutes - maxMealMinutes))
                     if (extendTo8) {
                         // There is not enough time to compete the meal staying in the 4-7 hours EW,
@@ -750,7 +744,7 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
         binding.windowsPctLabel.text = pct.toInt().toString() + "%"
         setGuiWaitTimeLabel(binding.windowWaitTimeLabel, progressSeconds = progressMinutes * 60, maxSeconds = maxMinutes * 60)
     } // setGuiWindowsProgressBar()
-    /***********************************************************************************************************************/
+
     @SuppressLint("SetTextI18n")
     private fun setGuiWaitTimeLabel(waitTimeLabel: TextView, progressSeconds: Int, maxSeconds: Int) {
         val stageStartLdt = when (waitTimeLabel.id) {
@@ -769,7 +763,7 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
         progressLdt = progressLdt.plusMinutes(-1).plusSeconds(1)
         waitTimeLabel.text = "-" + dur.stringFromDuration(Duration.between(progressLdt, stageEndLdt))
     } // setWaitTimeLabel()
-    /***********************************************************************************************************************/
+
     private fun setGuiBottomMsg() {
         binding.bottomMsgTextView.text = msg.generateBottomMsg(
             oldBottomMsg = this@MainActivity.binding.bottomMsgTextView.text.toString(),
@@ -777,7 +771,7 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
             timersColor = (if(binding.mealChr.visibility == View.VISIBLE) binding.mealChr else binding.windowsChr).currentTextColor
         )
     } // generateBottomMsg()
-    /***********************************************************************************************************************/
+
     private fun setGui() {
         setGuiMealChr()
         setGuiMealChrProgressBar()
@@ -787,13 +781,11 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
         setGuiWindowsChrBeginEndLabels()
         setGuiBottomMsg()
     } // setGuiBottomMsg()
-    /***********************************************************************************************************************/
 
     // ----------------------------------------------------------------------------------------------------------------------
     // FUNCTIONS RELATED TO MENU:
     // ----------------------------------------------------------------------------------------------------------------------
 
-    /***********************************************************************************************************************/
     @SuppressLint("RestrictedApi")
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         (menu as MenuBuilder).setOptionalIconsVisible(true)
@@ -801,7 +793,7 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
         MenuCompat.setGroupDividerEnabled(menu, true)
         return super.onCreateOptionsMenu(menu)
     } // onCreateOptionsMenu()
-    /***********************************************************************************************************************/
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         var url: String? = null
 
@@ -841,19 +833,26 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
             R.id.open_db_spy_activity -> startActivity(Intent(this, DbSpyActivity::class.java))
         }
 
-        if (url != null) startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        if (url != null) startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
 
         return super.onOptionsItemSelected(item)
     } // onOptionsItemSelected
-    /***********************************************************************************************************************/
-    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
-        val dbSpyMenuItem = menu!!.findItem(R.id.open_db_spy_activity)
-        dbSpyMenuItem.isVisible = Dbg.isDbgMode()
 
-        onPrepareOptionsMenuCancelCurrAppState(menu!!)
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        super.onPrepareOptionsMenu(menu)
+
+        menu.findItem(R.id.open_db_spy_activity).isVisible = Dbg.isDbgMode()
+
+        // Make the menu items invisible until the pages are setup:
+        menu.findItem(R.id.open_home_page).isVisible = false
+        menu.findItem(R.id.open_how_it_works).isVisible = false
+        menu.findItem(R.id.open_practical_instruction).isVisible = false
+        menu.findItem(R.id.open_fb_group).isVisible = false
+
+        onPrepareOptionsMenuCancelCurrAppState(menu)
         return super.onPrepareOptionsMenu(menu)
     } // onPrepareOptionsMenu()
-    /***********************************************************************************************************************/
+
     private fun onPrepareOptionsMenuCancelCurrAppState(menu: Menu) {
         val cancelCurrAppStateMenuItem = menu.findItem(R.id.cancel_curr_app_state)!!
 
@@ -878,31 +877,31 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
         cancelCurrAppStateMenuItem.title = getString(titleR)
         cancelCurrAppStateMenuItem.icon = getDrawable(iconR)
     }
-    /***********************************************************************************************************************/
+
     //    override fun onPause() {
     //        dbgMsg("CALLED", this::class.simpleName, "onPause()")
     //        toast(this, "onPause: " + AppState.curr)
     //        super.onPause()
     //    }
-    /***********************************************************************************************************************/
+
     //    override fun onStop() {
     //        dbgMsg("CALLED", this::class.simpleName, "onStop()")
     //        toast(this, "onStop: " + AppState.curr)
     //        super.onStop()
     //    }
-    /***********************************************************************************************************************/
+
     //    override fun onStart() {
     //        super.onStart()
     //        dbgMsg("CALLED", this::class.simpleName, "onStart()")
     //        toast(this, "onStart: " + AppState.curr)
     //    }
-    /***********************************************************************************************************************/
+
     //    override fun onRestart() {
     //        super.onRestart()
     //        dbgMsg("CALLED", this::class.simpleName, "onRestart()")
     //        toast(this, "onRestart: " + AppState.curr)
     //    }
-    /***********************************************************************************************************************/
+
 // Was called in the beginning of buttonClicked():
 //        if (buttonClickDeclined()) return
 
@@ -924,5 +923,4 @@ class MainActivity: AppCompatActivity(), Chronometer.OnChronometerTickListener {
 //        errMsgFunc.invoke()
 //        return true // buttonClicked() declined
 //    } // buttonClickedDeclined()
-    /***********************************************************************************************************************/
     }

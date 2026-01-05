@@ -31,12 +31,12 @@ class Stats(): Crudable {
 
     // The rest are irrelevant since the data source is not a straightforward SELECT of all columns of one table:
 
-    override val TABLE_NAME: String
-        get() = throw Exception("Stats.TABLE_NAME should never be got!")
+    override val tableName: String
+        get() = throw Exception("Stats.TABLE_NAME should never be got.")
 
     override var id: Int?
-        get() = throw Exception("Stats.id should never be got!")
-        set(value) {throw Exception("Stats.id should never be set!")}
+        get() = throw Exception("Stats.id should never be got.")
+        set(value) {throw Exception("Stats.id should never be set.")}
 
-    override fun extractContentValues(): ContentValues = throw Exception("Stats.extractContentValues() should never be called!")
+    override fun extractContentValues(): ContentValues = throw Exception("Stats.extractContentValues() should never be called.")
 }

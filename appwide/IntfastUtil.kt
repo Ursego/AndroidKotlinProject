@@ -7,7 +7,7 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import ca.intfast.iftimer.util.AppPrefs
+import ca.intfast.iftimer.util.CustomAppCompatActivity
 
 fun beep(durationMs: Int) {
     val toneGen1 = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
@@ -27,6 +27,6 @@ fun vibrate(context: Context, durationMs: Int) {
 }
 
 fun beepAndVibrate(context: Context) {
-    if (AppPrefs.getBoolean(PrefKey.BEEP_ON_ALARM, context)) beep(1000)
-    if (AppPrefs.getBoolean(PrefKey.VIBRATE_ON_ALARM, context)) vibrate(context, 1000)
+    if (CustomAppCompatActivity.getBoolean(PrefKey.BEEP_ON_ALARM, context)) beep(1000)
+    if (CustomAppCompatActivity.getBoolean(PrefKey.VIBRATE_ON_ALARM, context)) vibrate(context, 1000)
 }

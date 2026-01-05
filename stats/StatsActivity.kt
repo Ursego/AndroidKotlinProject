@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.menu.MenuBuilder
 import ca.intfast.iftimer.R
 import ca.intfast.iftimer.appwide.DurationController
@@ -12,15 +11,16 @@ import ca.intfast.iftimer.cycle.CycleController
 import ca.intfast.iftimer.databinding.ActivityStatsBinding
 import ca.intfast.iftimer.db.DbColumn
 import ca.intfast.iftimer.db.DbTable
+import ca.intfast.iftimer.util.AppActivity
 import ca.intfast.iftimer.util.CrudHelper
 import ca.intfast.iftimer.util.InfoMsg
 import kotlin.math.roundToInt
 
-class StatsActivity: AppCompatActivity() {
+class StatsActivity: AppActivity() {
     private lateinit var binding: ActivityStatsBinding
     private val cyc = CycleController(this)
     private val crudHelper = CrudHelper(this)
-    /***********************************************************************************************************************/
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -31,12 +31,8 @@ class StatsActivity: AppCompatActivity() {
 
         populate()
         deleteOld()
-
-        // Display "back" icon (left arrow) on the menu bar:
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.setDisplayShowHomeEnabled(true)
     } // onCreate()
-    /***********************************************************************************************************************/
+
 //    private fun deletePrevCycle() {
 //        cyc.deletePrevCycle()
 //
@@ -46,12 +42,12 @@ class StatsActivity: AppCompatActivity() {
 //            finish()
 //        }
 //    } // deletePrevCycle()
-    /***********************************************************************************************************************/
+
     private fun deleteStats() {
         cyc.deleteStats()
         finish()
     } // deleteStats()
-    /***********************************************************************************************************************/
+
     private fun populate() {
         val dur = DurationController(cyc, this)
 
@@ -87,7 +83,7 @@ class StatsActivity: AppCompatActivity() {
         binding.omadsNumTitle30.text = getString(R.string.stats__cycles, "30")
         binding.omadsNumTitle365.text = getString(R.string.stats__cycles, "365")
     } // populate()
-    /***********************************************************************************************************************/
+
     private fun retrieveStats(rowsLimit: String): Stats {
         val sqlSelect = "SELECT " +
             "ROUND(AVG((STRFTIME('%s', ${DbColumn.BETWEEN_MEALS_START}) - STRFTIME('%s', ${DbColumn.MEAL_1_START})) / 60)) AS ${DbColumn.AVG_MEAL_1}, " +
@@ -99,28 +95,28 @@ class StatsActivity: AppCompatActivity() {
                 "SELECT COUNT(1) " +
                   "FROM ${DbTable.CYCLE} " +
                  "WHERE ${DbColumn.ID} IN (SELECT ${DbColumn.ID} " + // limit by the same condition as the overall query...
-                                                                            "FROM ${DbTable.CYCLE} " +
-                                                                         "WHERE ${DbColumn.FASTING_START} IS NOT NULL " +
-                                                                   "ORDER BY ${DbColumn.ID} DESC " +
-                                                                             "LIMIT $rowsLimit) " +
+                                            "FROM ${DbTable.CYCLE} " +
+                                           "WHERE ${DbColumn.FASTING_START} IS NOT NULL " +
+                                        "ORDER BY ${DbColumn.ID} DESC " +
+                                           "LIMIT $rowsLimit) " +
                    "AND ${DbColumn.ID} IN (SELECT ${DbColumn.ID} " + // ...and exclude OMADs from that population
-                                                                        "FROM ${DbTable.CYCLE} " +
-                                                                     "WHERE ${DbColumn.MEAL_2_START} IS NOT NULL)" +
+                                            "FROM ${DbTable.CYCLE} " +
+                                           "WHERE ${DbColumn.MEAL_2_START} IS NOT NULL)" +
             ") AS ${DbColumn.MEAL_2_COUNT} " +
             "FROM ${DbTable.CYCLE} " +
             "WHERE ${DbColumn.ID} IN (SELECT ${DbColumn.ID} " +
-                                                                       "FROM ${DbTable.CYCLE} " +
-                                                                    "WHERE ${DbColumn.FASTING_START} IS NOT NULL " +
-                                                              "ORDER BY ${DbColumn.ID} DESC " +
-                                                                        "LIMIT $rowsLimit)"
+                                       "FROM ${DbTable.CYCLE} " +
+                                      "WHERE ${DbColumn.FASTING_START} IS NOT NULL " +
+                                   "ORDER BY ${DbColumn.ID} DESC " +
+                                      "LIMIT $rowsLimit)"
 
         val stats = crudHelper.retrieveRecord<Stats>(sqlSelect, required = true)!!
 
         val avgMealTemp = (
-                        (stats.avgMeal1!! * stats.meal1Count!! + stats.avgMeal2!! * stats.meal2Count!!).toDouble()
-                        /
-                        (stats.meal1Count!! + stats.meal2Count!!).toDouble()
-                    )
+                    (stats.avgMeal1!! * stats.meal1Count!! + stats.avgMeal2!! * stats.meal2Count!!).toDouble()
+                    /
+                    (stats.meal1Count!! + stats.meal2Count!!).toDouble()
+                )
         stats.avgMeal = if (avgMealTemp > 0) avgMealTemp.roundToInt() else 0
         stats.omadsCount = stats.meal1Count!! - stats.meal2Count!!
         val omadsPctTemp = (stats.omadsCount!!.toDouble() / stats.meal1Count!!.toDouble() * 100)
@@ -128,7 +124,7 @@ class StatsActivity: AppCompatActivity() {
 
         return stats
     } // retrieveStats()
-    /***********************************************************************************************************************/
+
     private fun deleteOld() {
         val whereClause = "${DbColumn.ID} NOT IN (" +
                                                         "SELECT ${DbColumn.ID} " +
@@ -137,13 +133,11 @@ class StatsActivity: AppCompatActivity() {
                                                          "LIMIT 365)"
         crudHelper.writableDatabase.delete(DbTable.CYCLE, whereClause, null)
     } // deleteOld()
-    /***********************************************************************************************************************/
 
     // ----------------------------------------------------------------------------------------------------------------------
     // FUNCTIONS RELATED TO MENU:
     // ----------------------------------------------------------------------------------------------------------------------
 
-    /***********************************************************************************************************************/
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.delete_stats -> {
@@ -154,16 +148,14 @@ class StatsActivity: AppCompatActivity() {
                     context = this
                 )
             }
-            android.R.id.home -> finish() // user clicked "back" icon (left arrow) on the menu bar
         }
         return super.onOptionsItemSelected(item)
     } // onOptionsItemSelected()
-    /***********************************************************************************************************************/
+
     @SuppressLint("RestrictedApi")
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         (menu as MenuBuilder).setOptionalIconsVisible(true)
         menuInflater.inflate(R.menu.stats_activity_menu, menu)
         return super.onCreateOptionsMenu(menu)
     } // onCreateOptionsMenu()
-    /***********************************************************************************************************************/
 }
