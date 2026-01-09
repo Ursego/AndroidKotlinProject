@@ -3,6 +3,7 @@ package ca.intfast.iftimer.cycle
 import android.content.Context
 import ca.intfast.iftimer.R
 import ca.intfast.iftimer.appwide.AppState
+import ca.intfast.iftimer.appwide.CurrAppState
 import ca.intfast.iftimer.appwide.DurationController
 import ca.intfast.iftimer.appwide.PrefKey
 import ca.intfast.iftimer.db.DbColumn
@@ -46,23 +47,23 @@ class CycleController(private val context: Context): CrudHelper(context) {
 
     private fun setAppStateByCurrCycle() {
         if (!currCycleExistsInDb /* it doesn't exist if user never started meal 1 after app install */) {
-            AppState.fasting = true // since meal 1 has not started yet, we treat this time as fasting
+            CurrAppState.fasting = true // since meal 1 has not started yet, we treat this time as fasting
             return
         }
 
         val currCycleIsMarkedAsOmad = (currCycle.meal2Start == null && currCycle.fastingStart != null)
         if (currCycleIsMarkedAsOmad) {
-            AppState.fasting = true // currently, user is ready to start new cycle by starting meal 1
+            CurrAppState.fasting = true // currently, user is ready to start new cycle by starting meal 1
             return
         }
 
         when (null) {
-            currCycle.betweenMealsStart -> AppState.meal1        = true
-            currCycle.meal2Start        -> AppState.betweenMeals = true
-            currCycle.fastingStart      -> AppState.meal2        = true
-            currCycle.fastingFinish     -> AppState.fasting      = true
-            currCycle.meal1Start        -> throw Exception("CycleController.setCurrAppStateByCurrCycle(): meal1Start cannot be null.")
-            else                        -> throw Exception("CycleController.setCurrAppStateByCurrCycle(): failed to set by currCycle: $currCycle")
+            currCycle.betweenMealsStart -> CurrAppState.meal1        = true
+            currCycle.meal2Start        -> CurrAppState.betweenMeals = true
+            currCycle.fastingStart      -> CurrAppState.meal2        = true
+            currCycle.fastingFinish     -> CurrAppState.fasting      = true
+            currCycle.meal1Start        -> throw Exception("meal1Start cannot be null.")
+            else                        -> throw Exception("Failed to set App Cycle")
         }
     } // setAppStateByCurrCycle()
 
@@ -85,7 +86,7 @@ class CycleController(private val context: Context): CrudHelper(context) {
     } // retrievePrevCycle()
 
     fun deleteStats() {
-        val whereClause = if (AppState.fasting) {
+        val whereClause = if (CurrAppState.fasting) {
             "" // delete all cycles
         } else {
             loadCurrCycleFromDb() // initialize the lateinit currCycle
@@ -114,8 +115,8 @@ class CycleController(private val context: Context): CrudHelper(context) {
         currCycle.meal2Start = null // it can contain a value if user started meal 2, but abandoned and didn't finish it
         currCycle.fastingStart = currCycle.betweenMealsStart // start fasting window when user finished meal 1
         update(currCycle)
-        AppState.fasting = true
-        CustomAppCompatActivity.put(PrefKey.LAST_APP_STATE_SET_BY_USER, AppState.FASTING, context) // for MainActivity.onResumeCheckInactivity()
+        CurrAppState.fasting = true
+        CustomAppCompatActivity.put(PrefKey.LAST_APP_STATE_SET_BY_USER, AppState.FASTING.name, context) // for MainActivity.onResumeCheckInactivity()
     } // makeCurrCycleOmad()
 
 //    fun getStageStartLdt(): LocalDateTime {
@@ -156,29 +157,29 @@ class CycleController(private val context: Context): CrudHelper(context) {
         if (currCycle.id == null) throw Exception("CycleController.startMeal1(): currCycle.id was not generated.")
         currCycleExistsInDb = true
 
-        AppState.meal1 = true
-        CustomAppCompatActivity.put(PrefKey.LAST_APP_STATE_SET_BY_USER, AppState.MEAL_1, context) // for MainActivity.onResumeCheckInactivity()
+        CurrAppState.meal1 = true
+        CustomAppCompatActivity.put(PrefKey.LAST_APP_STATE_SET_BY_USER, AppState.MEAL_1.name, context) // for MainActivity.onResumeCheckInactivity()
     } // startMeal1()
 
     fun startBetweenMeals(since: LocalDateTime? = null) { // when user clicks FINISH MEAL 1
         currCycle.betweenMealsStart = since ?: LocalDateTime.now()
         update(currCycle)
-        AppState.betweenMeals = true
-        CustomAppCompatActivity.put(PrefKey.LAST_APP_STATE_SET_BY_USER, AppState.BETWEEN_MEALS, context) // for MainActivity.onResumeCheckInactivity()
+        CurrAppState.betweenMeals = true
+        CustomAppCompatActivity.put(PrefKey.LAST_APP_STATE_SET_BY_USER, AppState.BETWEEN_MEALS.name, context) // for MainActivity.onResumeCheckInactivity()
     } // startBetweenMeals()
 
     fun startMeal2() {
         currCycle.meal2Start = LocalDateTime.now()
         update(currCycle)
-        AppState.meal2 = true
-        CustomAppCompatActivity.put(PrefKey.LAST_APP_STATE_SET_BY_USER, AppState.MEAL_2, context) // for MainActivity.onResumeCheckInactivity()
+        CurrAppState.meal2 = true
+        CustomAppCompatActivity.put(PrefKey.LAST_APP_STATE_SET_BY_USER, AppState.MEAL_2.name, context) // for MainActivity.onResumeCheckInactivity()
     } // startMeal2()
 
     fun startFasting(since: LocalDateTime? = null) { // when user clicks FINISH MEAL
         currCycle.fastingStart = since ?: LocalDateTime.now()
         update(currCycle)
-        AppState.fasting = true
-        CustomAppCompatActivity.put(PrefKey.LAST_APP_STATE_SET_BY_USER, AppState.FASTING, context) // for MainActivity.onResumeCheckInactivity()
+        CurrAppState.fasting = true
+        CustomAppCompatActivity.put(PrefKey.LAST_APP_STATE_SET_BY_USER, AppState.FASTING.name, context) // for MainActivity.onResumeCheckInactivity()
     } // startFasting()
 
     // ----------------------------------------------------------------------------------------------------------------------
@@ -187,10 +188,10 @@ class CycleController(private val context: Context): CrudHelper(context) {
 
     fun cancelCurrAppState() {
         when (true) {
-            AppState.meal1        -> cancelMeal1()
-            AppState.betweenMeals -> cancelBetweenMeals()
-            AppState.meal2        -> cancelMeal2()
-            AppState.fasting      -> cancelFasting()
+            CurrAppState.meal1        -> cancelMeal1()
+            CurrAppState.betweenMeals -> cancelBetweenMeals()
+            CurrAppState.meal2        -> cancelMeal2()
+            CurrAppState.fasting      -> cancelFasting()
             else                  -> throw Exception("None of AppState properties is true.")
         }
     }
@@ -207,15 +208,15 @@ class CycleController(private val context: Context): CrudHelper(context) {
             currCycle = prevCycle
         }
 
-        AppState.fasting = true
-        CustomAppCompatActivity.put(PrefKey.LAST_APP_STATE_SET_BY_USER, AppState.FASTING, context) // for MainActivity.onResumeCheckInactivity()
+        CurrAppState.fasting = true
+        CustomAppCompatActivity.put(PrefKey.LAST_APP_STATE_SET_BY_USER, AppState.FASTING.name, context) // for MainActivity.onResumeCheckInactivity()
     } // cancelMeal1()
 
     private fun cancelBetweenMeals() {
         currCycle.betweenMealsStart = null
         update(currCycle)
-        AppState.meal1 = true
-        CustomAppCompatActivity.put(PrefKey.LAST_APP_STATE_SET_BY_USER, AppState.MEAL_1, context) // for MainActivity.onResumeCheckInactivity()
+        CurrAppState.meal1 = true
+        CustomAppCompatActivity.put(PrefKey.LAST_APP_STATE_SET_BY_USER, AppState.MEAL_1.name, context) // for MainActivity.onResumeCheckInactivity()
     } // cancelBetweenMeals()
 
     private fun cancelMeal2() {
@@ -235,8 +236,8 @@ class CycleController(private val context: Context): CrudHelper(context) {
     private fun cancelFasting() {
         currCycle.fastingStart = null
         update(currCycle)
-        AppState.meal2 = true
-        CustomAppCompatActivity.put(PrefKey.LAST_APP_STATE_SET_BY_USER, AppState.MEAL_2, context) // for MainActivity.onResumeCheckInactivity()
+        CurrAppState.meal2 = true
+        CustomAppCompatActivity.put(PrefKey.LAST_APP_STATE_SET_BY_USER, AppState.MEAL_2.name, context) // for MainActivity.onResumeCheckInactivity()
     } // cancelFasting()
 
     // ----------------------------------------------------------------------------------------------------------------------
@@ -270,14 +271,15 @@ class CycleController(private val context: Context): CrudHelper(context) {
 
     val ewFinish: LocalDateTime
     get() {
-        if (!AppState.fasting) throw Exception("CycleController.ewFinish should be called only on fasting, not on ${AppState.curr}.")
+        if (!CurrAppState.fasting)
+            throw Exception("CycleController.ewFinish should be called only during fasting.")
         return currCycle.fastingStart!!
     }
 
     val betweenMealsStart: LocalDateTime
     get() {
-        if (!AppState.betweenMeals) throw
-        Exception("CycleController.betweenMealsStart should be called only between meals, not on ${AppState.curr}.")
+        if (!CurrAppState.betweenMeals)
+            throw Exception("CycleController.betweenMealsStart should be called only between meals.")
         return currCycle.betweenMealsStart!!
     }
 }

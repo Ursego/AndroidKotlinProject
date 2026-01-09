@@ -5,6 +5,8 @@ import android.content.Context
 import android.database.Cursor
 import android.os.SystemClock
 import android.widget.Chronometer
+import androidx.preference.PreferenceManager
+import ca.intfast.iftimer.appwide.AppState
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -131,3 +133,10 @@ fun Chronometer.resume(instanceName: String? = null /* omit if only one Chronome
 
     start(instanceName, startLdt, context)
 } // Chronometer.resume()
+
+//fun CustomAppCompatActivity.getAppState(key: String, context: Context): AppState {
+//    val appSharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)!!
+//    return appSharedPreferences.javaClass
+//
+//    getString(key, "")!!
+//}

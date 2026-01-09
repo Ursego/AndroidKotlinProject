@@ -27,7 +27,7 @@ class DurationController(private val cyc: CycleController, val context: Context)
     }
    
     fun todayEwDuration(): Duration {
-        if (!AppState.fasting) throw Exception("It should be called only on fasting, not on ${AppState.curr}.")
+        if (!CurrAppState.fasting) throw Exception("This function should be called only on fasting.")
         return Duration.between(cyc.ewStart, cyc.ewFinish)
     }
    
@@ -44,30 +44,30 @@ class DurationController(private val cyc: CycleController, val context: Context)
     // FUNCTIONS CALLED WHEN USER CLICKS ON START/FINISH MEAL BUTTON:
 
     fun mealTooShort(minimumMealMinutes: Int): Boolean {
-        if (!(AppState.meal1 || AppState.meal2)) throw Exception("It should be called only during a meal, not on ${AppState.curr}.")
+        if (!(CurrAppState.meal1 || CurrAppState.meal2)) throw Exception("This function should be called only during a meal.")
         return (getMealMinutesUpToNow() < minimumMealMinutes)
     }
    
     fun mealTooLong(): Boolean {
-        if (!(AppState.meal1 || AppState.meal2)) throw Exception("It should be called only during a meal, not on ${AppState.curr}.")
+        if (!(CurrAppState.meal1 || CurrAppState.meal2)) throw Exception("This function should be called only during a meal.")
         val mealMinutesUpToNow = getMealDurationUpToNow().toMinutes()
         val maxMealMinutes = CustomAppCompatActivity.getInt(PrefKey.MAXIMUM_MEAL_MINUTES, context)
         return (mealMinutesUpToNow >= maxMealMinutes)
     }
    
     fun fastingTooShort(minimumFastingHours: Int): Boolean {
-        if (!AppState.fasting) throw Exception("It should be called only on fasting, not on ${AppState.curr}.")
+        if (!CurrAppState.fasting) throw Exception("This function should be called only on fasting.")
         if (!cyc.atLeastOneCycleExistsInDb()) return false
         return (hoursAfterLastMealFinish() < minimumFastingHours)
     }
    
     fun betweenMealsTooShort(minimumBetweenMealsHours: Int): Boolean {
-        if (!AppState.betweenMeals) throw Exception("It should be called only between meals, not on ${AppState.curr}.")
+        if (!CurrAppState.betweenMeals) throw Exception("This function should be called only between meals.")
         return (hoursAfterLastMealFinish() < minimumBetweenMealsHours)
     }
    
     fun enoughTimeToFinishMeal2Inside8HoursEw(): Boolean {
-        if (!AppState.betweenMeals) throw Exception("It should be called only between meals, not on ${AppState.curr}.")
+        if (!CurrAppState.betweenMeals) throw Exception("This function should be called only between meals.")
         val maxMealMinutes = CustomAppCompatActivity.getInt(PrefKey.MAXIMUM_MEAL_MINUTES, context)
         val ewEndAsLdt = cyc.ewStart.plusHours(8)!!
         return (LocalDateTime.now()!!.plusMinutes(maxMealMinutes.toLong()) <= ewEndAsLdt)

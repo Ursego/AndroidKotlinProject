@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import ca.intfast.iftimer.R
 import ca.intfast.iftimer.appwide.AppState
+import ca.intfast.iftimer.appwide.CurrAppState
 import ca.intfast.iftimer.appwide.DurationController
 import ca.intfast.iftimer.appwide.PrefKey
 import ca.intfast.iftimer.appwide.beepAndVibrate
@@ -50,8 +51,8 @@ class MainActivityMsgController (private val dur: DurationController, private va
 
         if (abandoned) {
             val chronometerLabelText = when (true) {
-                AppState.betweenMeals -> context.getString(R.string.word__after_meal_1) // "AFTER MEAL 1"
-                AppState.fasting -> context.getString(R.string.word__fw) // "FASTING WINDOW"
+                CurrAppState.betweenMeals -> context.getString(R.string.word__after_meal_1) // "AFTER MEAL 1"
+                CurrAppState.fasting -> context.getString(R.string.word__fw) // "FASTING WINDOW"
                 else -> null // that will never happen
             }
 
@@ -71,7 +72,7 @@ class MainActivityMsgController (private val dur: DurationController, private va
         InfoMsg.show(title, msg, context)
     } // msgMealFinishedByForceSinceOneHourAchieved()
 
-    fun msgDayMarkedAsOmad(appStateWhenAbandoned: String? = null) {
+    fun msgDayMarkedAsOmad(appStateWhenAbandoned: AppState? = null) {
         // Called from MainActivity.makeCurrCycleOmad()
         val titleR = if (appStateWhenAbandoned == null /* day was marked as OMAD by user from menu */)
             R.string.msg__curr_day_marked_as_omad__title
@@ -96,22 +97,22 @@ class MainActivityMsgController (private val dur: DurationController, private va
     // BOTTOM MESSAGE:
 
     fun generateBottomMsg(oldBottomMsg: String, maxHoursInWindowsProgressBar: Int, timersColor: Int): String {
-        if (AppState.meal1 || AppState.meal2) {
+        if (CurrAppState.meal1 || CurrAppState.meal2) {
             if (timersColor == MainActivity.GREEN) return ""
             if (oldBottomMsg == "" /* beep & vibrate only once - not on each tick */) beepAndVibrate(context)
             return context.getString(R.string.bottom_msg__meal_red)
         }
 
-        if (AppState.betweenMeals && timersColor == MainActivity.GREEN)
+        if (CurrAppState.betweenMeals && timersColor == MainActivity.GREEN)
             return generateBottomMsgBetweenMealsGreen(maxHoursInWindowsProgressBar)
 
-        if (AppState.fasting && !cyc.atLeastOneCycleExistsInDb())
+        if (CurrAppState.fasting && !cyc.atLeastOneCycleExistsInDb())
             return "" // user cancelled first MEAL 1 after app install - we need to erase "YOU ARE NOT HUNGRY ANYMORE!" which could be in bottom msg
 
         val generateMsg = when (true) {
-            AppState.betweenMeals -> true // color is red if this code reached
-            AppState.fasting      -> (timersColor == MainActivity.RED)
-            else                  -> return "[MainActivityMsgController.generateBottomMsg should never be called on ${AppState.curr}]"
+            CurrAppState.betweenMeals -> true // color is red if this code reached
+            CurrAppState.fasting      -> (timersColor == MainActivity.RED)
+            else                  -> return "[MainActivityMsgController.generateBottomMsg should never be called during a meal]"
         }
 
         if (generateMsg)
@@ -157,15 +158,15 @@ class MainActivityMsgController (private val dur: DurationController, private va
         val stageStartLdt: LocalDateTime
 
         when (true) {
-            AppState.betweenMeals -> {
+            CurrAppState.betweenMeals -> {
                 hoursBeforeNextMeal = CustomAppCompatActivity.getInt(PrefKey.MINIMUM_BETWEEN_MEALS_HOURS, context)
                 stageStartLdt = cyc.betweenMealsStart
             }
-            AppState.fasting -> {
+            CurrAppState.fasting -> {
                 hoursBeforeNextMeal = 16
                 stageStartLdt = cyc.lastMealFinish!! // now, it returns currCycle.fastingStart
             }
-            else -> return "[MainActivityMsgController.generateBottomMsgRed should never be called on ${AppState.curr} <<1>>]"
+            else -> return "[MainActivityMsgController.generateBottomMsgRed should never be called during a meal <<1>>]"
         }
 
         val nextMealAsLdt = stageStartLdt.plusHours(hoursBeforeNextMeal.toLong())
@@ -179,8 +180,8 @@ class MainActivityMsgController (private val dur: DurationController, private va
         // Avoid msg "Wait X hours 1 minute" which is displayed for a second when a betweenMeals/FW starts -
         // instead, display "Wait X hours" immediately:
         val hours = when (true) {
-            AppState.fasting -> 16
-            AppState.betweenMeals -> CustomAppCompatActivity.getInt(PrefKey.MINIMUM_BETWEEN_MEALS_HOURS, context) // 2, 3 or 4
+            CurrAppState.fasting -> 16
+            CurrAppState.betweenMeals -> CustomAppCompatActivity.getInt(PrefKey.MINIMUM_BETWEEN_MEALS_HOURS, context) // 2, 3 or 4
             else -> null // that will never happen
         }
         if (waitDuration.toMinutes().toInt() == hours!! * 60 + 1)
@@ -189,7 +190,7 @@ class MainActivityMsgController (private val dur: DurationController, private va
         val waitDurationAsString = dur.stringFromDuration(waitDuration)
 
         val msg = when (true) {
-            AppState.betweenMeals -> {
+            CurrAppState.betweenMeals -> {
                 val ewEndAsLdt = cyc.ewStart.plusHours(maxHoursInWindowsProgressBar.toLong())!!
                 val ewEndAsLt = ewEndAsLdt.toLocalTime()
                 val ewEndAsString = ewEndAsLt.format(formatter)
@@ -217,11 +218,11 @@ class MainActivityMsgController (private val dur: DurationController, private va
                     context.getString(R.string.bottom_msg__bm_red__start_only, waitDurationAsString, nextMealAsString, ewEndAsString)
                 }
             }
-            AppState.fasting -> {
+            CurrAppState.fasting -> {
                 // "Next meal: %1$s or later. Wait %2$s.":
                 context.getString(R.string.bottom_msg__fasting_red, nextMealAsString, waitDurationAsString)
             }
-            else -> return "[MainActivityMsgController.generateBottomMsgRed should never be called on ${AppState.curr} <<2>>]"
+            else -> return "[MainActivityMsgController.generateBottomMsgRed should never be called during a meal <<2>>]"
         } // val msg = when (true)
 
         return msg.replace(oldValue = "..", newValue = ".") // "p.m.." > "p.m."
